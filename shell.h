@@ -109,12 +109,14 @@ typedef struct builtin
         int (*func)(info_t *);
 } builtin_table;
 
+
 /*main.c*/
 int main(int argc, char **argv);
 int open_input_file(const char *filename);
 void initialize_environment(info_t *info);
 int start_shell(info_t *info, char **argv);
 int main_shell_loop(info_t *info, char **argv);
+
 
 /*interactive.c*/
 int interactive(info_t *info);
@@ -141,13 +143,13 @@ int _print_string_fd(char *str, int fd);
 
 
 /*string1.c */
-char *_strdup(const char *str);
-int _putchar(char c);
-void _puts(const char *str);
-char *_strcpy(char *dest, const char *src);
+char *string_copy(char *dest, const char *src);
+char *string_duplicate(const char *str);
+void string_print(const char *str)
+int character_print(char c)
 
-/* exits.c */
-char *_custom_strchr(const char __attribute__((unused)) *s, int __attribute__((unused)) c);
+/*custom_str.c */
+char *_custom_strchr(const char __attribute__((unused)) *s, int __attribute__((unused))c);
 char *_custom_strncpy(char *dest, const char *src, size_t n);
 char *_custom_strncat(char *dest, const char *src, size_t n);
 
@@ -191,13 +193,40 @@ char *strchr(const char *s, int c);
 void handle_memory_error(char *p);
 void handle_buffer(info_t *info, char **p, char **new_p, size_t total_bytes_read, char *buffer_pos, size_t length);
 
+/*get_environment.c*/
+char **get_environ(info_t *info);
+int _unsetenv(info_t *info, char *var);
+int _setenv(info_t *info, char *var, char *value);
 
-/* getenv.c */
+
+/*getinfo.c*/
+void clear_info(info_t *info);
+void set_info(info_t *info, char **av);
+void free_info(info_t *info, int all);
+
+
+/*getinfo.c*/
+char *get_history_file(info_t *info);
+int write_history(info_t *info);
+int read_history(info_t *info);
+int build_history_list(info_t *info, char *buf, int linecount);
+int renumber_history(info_t *info);
+
+/*history_utils.c*/
+char *get_history_file(info_t *info);
+int write_history_to_file_internal(info_t *info, char *filename);
+char *read_history_from_file_internal(info_t *info, char *filename);
+
+/*history.c*/
+int read_history_from_file(info_t *info, char *filename)
+int build_history_list(info_t *info, char *buf, int linecount)
+
+/* getenv.c 
 int printEnvironment(info_t *info);
 char *getEnvironmentValue(info_t *info, const char *name);
 int populateEnvironmentList(info_t *info);
 int setEnvironmentVariable(info_t *info);
-int unsetEnvironmentVariable(info_t *info);
+int unsetEnvironmentVariable(info_t *info);*/
 
 
 
