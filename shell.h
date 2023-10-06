@@ -109,10 +109,29 @@ typedef struct builtin
         int (*func)(info_t *);
 } builtin_table;
 
+/*main.c*/
+int main(int argc, char **argv);
+int open_input_file(const char *filename);
+void initialize_environment(info_t *info);
+int start_shell(info_t *info, char **argv);
+int main_shell_loop(info_t *info, char **argv);
 
+/*interactive.c*/
+int interactive(info_t *info);
+int is_delim(char c, char *delim);
+int _isalpha(int c);
+int _atoi(char *s);
 
-/* loophsh.c */
-int loophsh(char **);
+/*memory.c*/
+int free_and_null(void **ptr);
+
+/*realloc.c*/
+char *_memset(char *s, char c, unsigned int n);
+void free_string_array(char **str_array);
+void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size);
+
+/* shell_loop.c */
+int shell_loop(char **);
 
 /*errors.c*/
 void _print_string(char *str);
@@ -184,5 +203,3 @@ int unsetEnvironmentVariable(info_t *info);
 
 
 #endif
-
-
