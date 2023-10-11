@@ -124,6 +124,14 @@ int is_delim(char c, char *delim);
 int _isalpha(int c);
 int _atoi(char *s);
 
+
+/*input.c*/
+ssize_t read_input_buffer(info_t *info, char **buf, size_t *len);
+ssize_t get_input_line(info_t *info);
+int custom_getline(info_t *info, char **ptr, size_t *length);
+void sigintHandler(__attribute__((unused)) int sig_num);
+
+
 /*memory.c*/
 int free_and_null(void **ptr);
 
@@ -178,21 +186,6 @@ int unset_alias(info_t *info, char *alias_name);
 int print_history(info_t *info);
 
 
-
-/*getline.c */
-ssize_t read_input_buffer(info_t *info, char **buf, size_t *len);
-void sigintHandler(__attribute__((unused)) int sig_num);
-int custom_getline(info_t *info, char **ptr, size_t *length);
-ssize_t get_input_line(info_t *info);
-
-ssize_t handle_input(info_t *info, char **buf, size_t *len, ssize_t bytes_read);
-void process_command_chain(info_t *info, char *cmd_chain_buffer, size_t *chain_start_pos, size_t current_pos, size_t buffer_len);
-void reset_buffer_positions(size_t *current_pos, size_t *buffer_len, info_t *info);
-ssize_t read_input_buffer(info_t *info, char **buf, size_t *len);
-char *strchr(const char *s, int c);
-void handle_memory_error(char *p);
-void handle_buffer(info_t *info, char **p, char **new_p, size_t total_bytes_read, char *buffer_pos, size_t length);
-
 /*get_environment.c*/
 char **get_environ(info_t *info);
 int _unsetenv(info_t *info, char *var);
@@ -221,14 +214,52 @@ char *read_history_from_file_internal(info_t *info, char *filename);
 int read_history_from_file(info_t *info, char *filename)
 int build_history_list(info_t *info, char *buf, int linecount)
 
-/* getenv.c 
-int printEnvironment(info_t *info);
-char *getEnvironmentValue(info_t *info, const char *name);
-int populateEnvironmentList(info_t *info);
-int setEnvironmentVariable(info_t *info);
-int unsetEnvironmentVariable(info_t *info);*/
 
+/*linked_list.c*/
+list_t *add_node(list_t **head, const char *str, int num);
+list_t *add_node_end(list_t **head, const char *str, int num);
+void print_node_string(const list_t *node);
+size_t print_list_strings(const list_t *head);
 
+/*linked_list1.c*/
+char **list_to_strings(list_t *head);
+size_t print_linked_list(const list_t *h);
+list_t *find_node_starts_with(list_t *node, char *prefix, char c);
+ssize_t get_node_index(list_t *head, list_t *node);
+
+/*execution.c*/
+int is_executable(const char *path);
+char *create_full_path(const char *path, const char *cmd);
+int is_command_executable(const char *path, const char *cmd);
+char *find_command_in_path(const char *path, const char *cmd);
+
+/*execution1.c*/
+char **split_path(const char *pathstr);
+char *find_command_path(const char *pathstr, const char *cmd);
+
+/*hsh.c*/
+int hsh(info_t *info, char **argv);
+int find_builtin(info_t *info);
+void find_cmd(info_t *info);
+void fork_cmd(info_t *info);
+
+/*string.c*/
+int _strlen(const char *s);
+int _strcmp(const char *s1, const char *s2);
+char *starts_with(const char *haystack, const char *needle);
+char *_strcat(char *dest, const char *src);
+
+/*tokenizer.c*/
+static int count_words(const char *str, const char *delimiters);
+static char **split_words(const char *str, const char *delimiters, int nmwords);
+char **strtow(const char *str, const char *delimiters);
+
+/*vars.c*/
+int is_chain_delimiter(info_t *info, char *buf, size_t *p);
+void continue_chain(info_t *info, char *buf, size_t *p, size_t i, size_t len);
+int replace_alias(info_t *info);
+int replace_vars(info_t *info);
+int replace_string(char **old, char *new);
 
 
 #endif
