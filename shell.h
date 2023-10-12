@@ -107,8 +107,8 @@ typedef struct builtin
 {
         char *type;
         int (*func)(info_t *);
-} builtin_table;
-
+}
+builtin_table;
 
 /*main.c*/
 int main(int argc, char **argv);
@@ -153,8 +153,8 @@ int _print_string_fd(char *str, int fd);
 /*string1.c */
 char *string_copy(char *dest, const char *src);
 char *string_duplicate(const char *str);
-void string_print(const char *str)
-int character_print(char c)
+void string_print(const char *str);
+int character_print(char c);
 
 /*custom_str.c */
 char *_custom_strchr(const char __attribute__((unused)) *s, int __attribute__((unused))c);
@@ -171,8 +171,7 @@ char *number_to_string(long int num, int base, int flags);
 void remove_comments(char *buf);
 
 /*builtin.c */
-char *_getenv(info_t *info, const char *name);
-int _setenv(info_t *info, const char *name, const char *value);
+void print_error(info_t *info, const char *estr);
 int exitShell(info_t *info);
 int changeDirectory(info_t *info);
 int helpCommand(info_t *info);
@@ -185,11 +184,17 @@ int set_alias(info_t *info, char *alias);
 int unset_alias(info_t *info, char *alias_name);
 int print_history(info_t *info);
 
+/*environment.c*/
+int printEnvironment(info_t *info);
+char *getEnvironmentValue(info_t *info, const char *name);
+int setEnvironmentVariable(info_t *info);
+int unsetEnvironmentVariable(info_t *info);
+int populateEnvironmentList(info_t *info);
 
-/*get_environment.c*/
+/*get_environment.c
 char **get_environ(info_t *info);
 int _unsetenv(info_t *info, char *var);
-int _setenv(info_t *info, char *var, char *value);
+int _setenv(info_t *info, char *var, char *value);*/
 
 
 /*getinfo.c*/
@@ -198,21 +203,14 @@ void set_info(info_t *info, char **av);
 void free_info(info_t *info, int all);
 
 
-/*getinfo.c*/
-char *get_history_file(info_t *info);
-int write_history(info_t *info);
-int read_history(info_t *info);
-int build_history_list(info_t *info, char *buf, int linecount);
-int renumber_history(info_t *info);
-
 /*history_utils.c*/
 char *get_history_file(info_t *info);
 int write_history_to_file_internal(info_t *info, char *filename);
 char *read_history_from_file_internal(info_t *info, char *filename);
 
 /*history.c*/
-int read_history_from_file(info_t *info, char *filename)
-int build_history_list(info_t *info, char *buf, int linecount)
+int read_history_from_file(info_t *info, char *filename);
+int build_history_list(info_t *info, char *buf, int linecount);
 
 
 /*linked_list.c*/

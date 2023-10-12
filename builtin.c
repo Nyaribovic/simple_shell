@@ -1,5 +1,5 @@
 #include "shell.h"
-#include <string.h> /* Include string.h for standard library functions. */
+#include <string.h>
 
 void print_error(info_t *info, const char *estr);
 
@@ -48,23 +48,23 @@ int changeDirectory(info_t *info)
 
 	if (!info->argv[1])
 	{
-		dir = _getenv(info, "HOME=");
+		dir = getEnvironmentValue(info, "HOME=");
 		if (!dir)
-			chdir_ret = chdir((dir = _getenv(info, "PWD=")) ? dir : "/");
+			chdir_ret = chdir((dir = getEnvironmentValue(info, "PWD=")) ? dir : "/");
 		else
 			chdir_ret = chdir(dir);
 	}
 	else if (_strcmp(info->argv[1], "-") == 0)
 	{
-		if (!_getenv(info, "OLDPWD="))
+		if (!getEnvironmentValue(info, "OLDPWD="))
 		{
 			_puts(s);
 			_putchar('\n');
 			return (1);
 		}
-		_puts(_getenv(info, "OLDPWD="));
+		_puts(getEnvironmentValue(info, "OLDPWD="));
 		_putchar('\n');
-		chdir_ret = chdir((dir = _getenv(info, "OLDPWD=")) ? dir : "/");
+		chdir_ret = chdir((dir = getEnvironmentValue(info, "OLDPWD=")) ? dir : "/");
 	}
 	else
 		chdir_ret = chdir(info->argv[1]);
@@ -76,7 +76,7 @@ int changeDirectory(info_t *info)
 	}
 	else
 	{
-		_setenv(info, "OLDPWD", _getenv(info, "PWD="));
+		_setenv(info, "OLDPWD", getEnvironmentValue(info, "PWD="));
 		_setenv(info, "PWD", getcwd(buffer, 1024));
 	}
 	return (0);

@@ -8,7 +8,7 @@
  */
 char *get_history_file(info_t *info)
 {
-	char *home_dir = _getenv(info, "HOME=");
+	char *home_dir =getEnvironmentValue(info, "HOME=");/*_getenv*/
 
 	if (!home_dir)
 		return (NULL);
