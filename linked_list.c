@@ -112,3 +112,45 @@ size_t print_list_strings(const list_t *head)
 	}
 	return (count);
 }
+
+/**
+ * delete_node_at_index - Deletes the node at a given index
+ * @head: A pointer to the address of the first node
+ * @index: The index of the node to delete
+ *
+ * Return: 1 on success, 0 on failure
+ */
+int delete_node_at_index(list_t **head, unsigned int index)
+{
+	if (!head || !*head)
+		return (0);
+
+	if (index == 0)
+	{
+		list_t *temp = *head;
+		*head = (*head)->next;
+		free(temp->str);
+		free(temp);
+		return (1);
+	}
+
+	list_t *current = *head;
+	list_t *prev = NULL;
+
+	for (unsigned int i = 0; i < index; i++)
+	{
+		if (!current)
+			return (0); /* Index out of range */
+		prev = current;
+		current = current->next;
+	}
+
+	if (!current)
+		return (0); /* Index out of range */
+
+	prev->next = current->next;
+	free(current->str);
+	free(current);
+
+	return (1);
+}

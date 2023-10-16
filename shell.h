@@ -15,7 +15,7 @@
 /* for read/write buffers */
 #define READ_BUF_SIZE 1024
 #define WRITE_BUF_SIZE 1024
-#define BUF_FLUSH -1
+#define BUF_FLUSH NULL 
 
 /* for command chaining */
 #define CMD_NORM        0
@@ -212,18 +212,30 @@ char *read_history_from_file_internal(info_t *info, char *filename);
 int read_history_from_file(info_t *info, char *filename);
 int build_history_list(info_t *info, char *buf, int linecount);
 
-
 /*linked_list.c*/
+list_t *add_node(list_t **head, const char *str, int num);
+list_t *add_node_end(list_t **head, const char *str, int num);
+void print_node_string(const list_t *node);
+int delete_node_at_index(list_t **head, unsigned int index);
+
+/*linked_list1.c*/
+size_t list_length(const list_t *h);
+char **list_to_strings(list_t *head);
+size_t print_linked_list(const list_t *h);
+list_t *find_node_starts_with(list_t *node, char *prefix, char c);
+ssize_t get_node_index(list_t *head, list_t *node);
+
+/*linked_list.c
 list_t *add_node(list_t **head, const char *str, int num);
 list_t *add_node_end(list_t **head, const char *str, int num);
 void print_node_string(const list_t *node);
 size_t print_list_strings(const list_t *head);
 
-/*linked_list1.c*/
+linked_list1.c
 char **list_to_strings(list_t *head);
 size_t print_linked_list(const list_t *h);
 list_t *find_node_starts_with(list_t *node, char *prefix, char c);
-ssize_t get_node_index(list_t *head, list_t *node);
+ssize_t get_node_index(list_t *head, list_t *node);*/
 
 /*execution.c*/
 int is_executable(const char *path);
@@ -246,6 +258,13 @@ int _strlen(const char *s);
 int _strcmp(const char *s1, const char *s2);
 char *starts_with(const char *haystack, const char *needle);
 char *_strcat(char *dest, const char *src);
+
+/*string1.c*/
+char *string_copy(char *dest, const char *src);
+char *string_duplicate(const char *str);
+void string_print(const char *str);
+int character_print(char c);
+
 
 /*tokenizer.c*/
 static int count_words(const char *str, const char *delimiters);

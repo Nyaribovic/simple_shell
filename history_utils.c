@@ -8,7 +8,7 @@
  */
 char *get_history_file(info_t *info)
 {
-	char *home_dir =getEnvironmentValue(info, "HOME=");/*_getenv*/
+	char *home_dir = getEnvironmentValue(info, "HOME="); /* _getenv */
 
 	if (!home_dir)
 		return (NULL);
@@ -18,40 +18,11 @@ char *get_history_file(info_t *info)
 	if (!history_file)
 		return (NULL);
 
-	_strcpy(history_file, home_dir);
+	string_copy(history_file, home_dir);
 	_strcat(history_file, "/");
 	_strcat(history_file, HIST_FILE);
 
 	return (history_file);
-}
-
-/**
- * write_history_to_file_internal - Write history to file
- * @info: Pointer to the parameter struct
- * @filename: The name of the history file
- *
- * Return: 1 on success, -1 on failure
- */
-int write_history_to_file_internal(info_t *info, char *filename)
-{
-	ssize_t fd = open(filename, O_CREAT | O_TRUNC | O_RDWR, 0644);
-
-	if (fd == -1)
-		return (-1);
-
-	list_t *node = info->history;
-
-	while (node)
-	{
-		_putsfd(node->str, fd);
-		_putfd('\n', fd);
-		node = node->next;
-	}
-
-	_putfd(BUF_FLUSH, fd);
-	close(fd);
-
-	return (1);
 }
 
 /**
@@ -97,4 +68,34 @@ char *read_history_from_file_internal(info_t *info, char *filename)
 	buf[st.st_size] = '\0';
 
 	return (buf);
+}
+
+/**
+ * write_history_to_file_internal - Write history to file
+ * @info: Pointer to the parameter struct
+ * @filename: The name of the history file
+ *
+ * Return: 1 on success, -1 on failure
+ */
+int write_history_to_file_internal(info_t *info, char *filename)
+{
+	ssize_t fd = open(filename, O_CREAT | O_TRUNC | O_RDWR, 0644);
+
+	if (fd == -1)
+		return (-1);
+
+	list_t *node = info->history;
+
+	while (node)
+	{
+		char *str = node->str;
+
+		_write_character_fd('\n', fd);
+		_print_string_fd(str, fd);
+		node = node->next;
+	}
+
+	close(fd);
+
+	return (1);
 }
