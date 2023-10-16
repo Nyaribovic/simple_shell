@@ -25,19 +25,19 @@ void _print_string(char *str)
  * Return: On success 1.
  * On error, -1 is returned, and errno is set appropriately.
  */
-int _write_character_stderr(char c)
+int _write_character_stderr(int c)
 {
 	static int i;
 	static char buf[WRITE_BUF_SIZE];
 
 	if (c == BUF_FLUSH || i >= WRITE_BUF_SIZE)
 	{
-		write(2, buf, i);
+ 		write(2, buf, i);
 		i = 0;
 	}
 
 	if (c != BUF_FLUSH)
-		buf[i++] = c;
+		buf[i++] = (char)c;
 
 	return (1);
 }
@@ -85,4 +85,22 @@ int _print_string_fd(char *str, int fd)
 	}
 
 	return (i);
+}
+
+/**
+ * _write_string_stderr - Writes a string to stderr.
+ * @str: The string to print.
+ */
+void _write_string_stderr(const char *str)
+{
+	int i = 0;
+
+	if (!str)
+		return;
+
+	while (str[i] != '\0')
+	{
+		_write_character_stderr(str[i]);
+		i++;
+	}
 }

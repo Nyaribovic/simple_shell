@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 	initialize_environment(&info);
 	read_command_history(&info);
 
-	/*Next Start the main shell loop */
+	/* Next, start the main shell loop */
 	int exit_status = start_shell(&info, argv);
 
 	return (exit_status);
@@ -50,11 +50,11 @@ int open_input_file(const char *filename)
 			exit(126);
 		if (errno == ENOENT)
 		{
-			_print_string('filename');
-			_print_string(": 0: Can't open ");
-			_print_string(filename);
+
+			_write_string_stderr(filename);
+			_write_string_stderr(": 0: Can't open ");
+			_write_character_stderr(-1);
 			_write_character_stderr('\n');
-			_write_character_stderr(BUF_FLUSH);
 			exit(127);
 		}
 	}
@@ -63,7 +63,7 @@ int open_input_file(const char *filename)
 }
 
 /**
-  * initialize_environment - Initialize environment variables
+ * initialize_environment - Initialize environment variables
  * @info: Pointer to info_t structure
  */
 void initialize_environment(info_t *info)

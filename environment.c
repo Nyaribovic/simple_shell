@@ -8,7 +8,7 @@
  */
 int printEnvironment(info_t *info)
 {
-	print_list_str(info->env);
+	print_list_strings(info->env);
 	return (0);
 }
 
@@ -45,14 +45,14 @@ int setEnvironmentVariable(info_t *info)
 {
 	if (info->argc != 3)
 	{
-		_puts("Usage: setenv VARIABLE VALUE\n");
+		string_print("Usage: setenv VARIABLE VALUE\n");
 		return (1);
 	}
 
 	if (_setenv(info, info->argv[1], info->argv[2]) == 0)
 		return (0);
 
-	_puts("Failed to set environment variable.\n");
+	string_print("Failed to set environment variable.\n");
 	return (1);
 }
 
@@ -66,14 +66,14 @@ int unsetEnvironmentVariable(info_t *info)
 {
 	if (info->argc != 2)
 	{
-		_puts("Usage: unsetenv VARIABLE\n");
+		string_print("Usage: unsetenv VARIABLE\n");
 		return (1);
 	}
 
 	if (unsetenv(info->argv[1]) == 0)
 		return (0);
 
-	_puts("Failed to unset environment variable.\n");
+	string_print("Failed to unset environment variable.\n");
 	return (1);
 }
 

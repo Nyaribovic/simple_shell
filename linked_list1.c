@@ -36,7 +36,7 @@ char **list_to_strings(list_t *head)
 	if (!head || list_size == 0)
 		return (NULL);
 
-	str_array = malloc(sizeof(char *) * (list_size + 1);
+	str_array = malloc(sizeof(char *) * (list_size + 1));
 
 	if (!str_array)
 		return (NULL);

@@ -110,148 +110,163 @@ typedef struct builtin
 }
 builtin_table;
 
+/*custom_str.c*/
+
+char *_custom_strncpy(char *dest, const char *src, size_t n);
+char *_custom_strncat(char *dest, const char *src, size_t n);
+char *_custom_strchr(const char *s, int c);
+
+/*errors.c */
+
+void _print_string(char *str);
+int _write_character_stderr(int c);
+int _write_character_fd(char c, int fd);
+int _print_string_fd(char *str, int fd);
+
+/*get_environment.c */
+
+char **get_environ(info_t *info);
+int _unsetenv(info_t *info, char *var);
+int _setenv(info_t *info, char *var, char *value);
+
+/*history_utils.c */
+
+char *get_history_file(info_t *info);
+char *read_history_from_file_internal(info_t *info, char *filename);
+int write_history_to_file_internal(info_t *info, char *filename);
+
+/*interactive.c*/
+
+int interactive(info_t *info);
+int is_delim(char c, char *delim);
+int _isalpha(int c);
+int _atoi(char *s);
+
 /*main.c*/
+
 int main(int argc, char **argv);
 int open_input_file(const char *filename);
 void initialize_environment(info_t *info);
 int start_shell(info_t *info, char **argv);
 int main_shell_loop(info_t *info, char **argv);
 
+/*realloc.c */
 
-/*interactive.c*/
-int interactive(info_t *info);
-int is_delim(char c, char *delim);
-int _isalpha(int c);
-int _atoi(char *s);
-
-
-/*input.c*/
-ssize_t read_input_buffer(info_t *info, char **buf, size_t *len);
-ssize_t get_input_line(info_t *info);
-int custom_getline(info_t *info, char **ptr, size_t *length);
-void sigintHandler(__attribute__((unused)) int sig_num);
-
-
-/*memory.c*/
-int free_and_null(void **ptr);
-
-/*realloc.c*/
 char *_memset(char *s, char c, unsigned int n);
 void free_string_array(char **str_array);
 void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size);
 
-/* shell_loop.c */
-int shell_loop(char **);
+/*string.c*/
 
-/*errors.c*/
-void _print_string(char *str);
-int _write_character_stderr(char c);
-int _write_character_fd(char c, int fd);
-int _print_string_fd(char *str, int fd);
+int _strlen(const char *s);
+int _strcmp(const char *s1, const char *s2);
+char *starts_with(const char *haystack, const char *needle);
+char *_strcat(char *dest, const char *src);
 
+/*builtin1.c  */
 
-/*string1.c */
-char *string_copy(char *dest, const char *src);
-char *string_duplicate(const char *str);
-void string_print(const char *str);
-int character_print(char c);
-
-/*custom_str.c */
-char *_custom_strchr(const char __attribute__((unused)) *s, int __attribute__((unused))c);
-char *_custom_strncpy(char *dest, const char *src, size_t n);
-char *_custom_strncat(char *dest, const char *src, size_t n);
-
-
-
-/*errors1.c */
-int string_to_int(char *s);
-void print_error_message(info_t *info, char *error_type);
-int print_line_number(int input, int fd);
-char *number_to_string(long int num, int base, int flags);
-void remove_comments(char *buf);
-
-/*builtin.c */
-void print_error(info_t *info, const char *estr);
-int exitShell(info_t *info);
-int changeDirectory(info_t *info);
-int helpCommand(info_t *info);
-
-
-/*_builtin1.c */
-int _myalias(info_t *info);
-int print_alias(list_t *node);
-int set_alias(info_t *info, char *alias);
-int unset_alias(info_t *info, char *alias_name);
 int print_history(info_t *info);
+int unset_alias(info_t *info, char *alias);
+int set_alias(info_t *info, char *alias);
+int print_alias(list_t *node);
 
 /*environment.c*/
+
 int printEnvironment(info_t *info);
 char *getEnvironmentValue(info_t *info, const char *name);
 int setEnvironmentVariable(info_t *info);
 int unsetEnvironmentVariable(info_t *info);
 int populateEnvironmentList(info_t *info);
 
-/*get_environment.c
-char **get_environ(info_t *info);
-int _unsetenv(info_t *info, char *var);
-int _setenv(info_t *info, char *var, char *value);*/
+/*execution1.c */
 
 
-/*getinfo.c*/
+char **split_path(const char *pathstr);
+char *find_command_path(const char *pathstr, const char *cmd);
+
+/*getinfo.c */
+
 void clear_info(info_t *info);
 void set_info(info_t *info, char **av);
 void free_info(info_t *info, int all);
 
+/*hsh.c */
 
-/*history_utils.c*/
-char *get_history_file(info_t *info);
-int write_history_to_file_internal(info_t *info, char *filename);
-char *read_history_from_file_internal(info_t *info, char *filename);
+int hsh(info_t *info, char **argv);
+int find_builtin(info_t *info);
+void find_cmd(info_t *info);
+void fork_cmd(info_t *info);
 
-/*history.c*/
-int read_history_from_file(info_t *info, char *filename);
-int build_history_list(info_t *info, char *buf, int linecount);
-
-/*linked_list.c*/
+/*linked_list.c */
 list_t *add_node(list_t **head, const char *str, int num);
 list_t *add_node_end(list_t **head, const char *str, int num);
 void print_node_string(const list_t *node);
+size_t print_list_strings(const list_t *head);
 int delete_node_at_index(list_t **head, unsigned int index);
 
-/*linked_list1.c*/
+/*linked_list1.c */
+
 size_t list_length(const list_t *h);
 char **list_to_strings(list_t *head);
 size_t print_linked_list(const list_t *h);
 list_t *find_node_starts_with(list_t *node, char *prefix, char c);
 ssize_t get_node_index(list_t *head, list_t *node);
 
-/*linked_list.c
-list_t *add_node(list_t **head, const char *str, int num);
-list_t *add_node_end(list_t **head, const char *str, int num);
-void print_node_string(const list_t *node);
-size_t print_list_strings(const list_t *head);
+/*memory.c */
 
-linked_list1.c
-char **list_to_strings(list_t *head);
-size_t print_linked_list(const list_t *h);
-list_t *find_node_starts_with(list_t *node, char *prefix, char c);
-ssize_t get_node_index(list_t *head, list_t *node);*/
+int free_and_null(void **ptr);
 
-/*execution.c*/
+/*tokenizer.c*/
+
+static int count_words(const char *str, const char *delimiters);
+static char **split_words(const char *str, const char *delimiters, int nmwords);
+char **strtow(const char *str, const char *delimiters);
+
+/*builtin.c*/
+
+void print_error(info_t *info, const char *estr);
+int exitShell(info_t *info);
+int changeDirectory(info_t *info);
+int helpCommand(info_t *info);
+
+/*errors1.c*/
+
+int string_to_int(char *s);
+void print_error_message(info_t *info, char *error_type);
+int print_line_number(int input, int fd);
+void remove_comments(char *buf);
+void _write_string_stderr(const char *str);
+
+/*execution.c */
+
 int is_executable(const char *path);
+char *extract_path(const char *pathstr, int start, int stop);
 char *create_full_path(const char *path, const char *cmd);
 int is_command_executable(const char *path, const char *cmd);
 char *find_command_in_path(const char *path, const char *cmd);
 
-/*execution1.c*/
-char **split_path(const char *pathstr);
-char *find_command_path(const char *pathstr, const char *cmd);
+/*history.c */
 
-/*hsh.c*/
-int hsh(info_t *info, char **argv);
-int find_builtin(info_t *info);
-void find_cmd(info_t *info);
-void fork_cmd(info_t *info);
+int read_history_from_file(info_t *info, char *filename);
+int build_history_list(info_t *info, char *buf, int line);
+void handle_open_file_error(const char *prog_name, const char *file_name);
+int read_command_history(info_t *info);
+
+/*input.c */
+
+ssize_t read_input_buffer(info_t *info, char **buf, size_t *len);
+ssize_t get_input_line(info_t *info);
+int custom_getline(info_t *info, char **ptr, size_t *length);
+void sigintHandler(__attribute__((unused)) int sig_num);
+
+/*linked_list.c*/
+
+list_t *add_node(list_t **head, const char *str, int num);
+list_t *add_node_end(list_t **head, const char *str, int num);
+void print_node_string(const list_t *node);
+size_t print_list_strings(const list_t *head);
+void free_list(list_t **head);
+
 
 /*string.c*/
 int _strlen(const char *s);
@@ -259,24 +274,20 @@ int _strcmp(const char *s1, const char *s2);
 char *starts_with(const char *haystack, const char *needle);
 char *_strcat(char *dest, const char *src);
 
+
 /*string1.c*/
+
 char *string_copy(char *dest, const char *src);
 char *string_duplicate(const char *str);
 void string_print(const char *str);
 int character_print(char c);
 
-
-/*tokenizer.c*/
-static int count_words(const char *str, const char *delimiters);
-static char **split_words(const char *str, const char *delimiters, int nmwords);
-char **strtow(const char *str, const char *delimiters);
-
 /*vars.c*/
+
 int is_chain_delimiter(info_t *info, char *buf, size_t *p);
 void continue_chain(info_t *info, char *buf, size_t *p, size_t i, size_t len);
 int replace_alias(info_t *info);
 int replace_vars(info_t *info);
 int replace_string(char **old, char *new);
-
 
 #endif

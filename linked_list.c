@@ -114,43 +114,24 @@ size_t print_list_strings(const list_t *head)
 }
 
 /**
- * delete_node_at_index - Deletes the node at a given index
+ * free_list - Frees all nodes in a linked list
  * @head: A pointer to the address of the first node
- * @index: The index of the node to delete
- *
- * Return: 1 on success, 0 on failure
  */
-int delete_node_at_index(list_t **head, unsigned int index)
+void free_list(list_t **head)
 {
 	if (!head || !*head)
-		return (0);
-
-	if (index == 0)
-	{
-		list_t *temp = *head;
-		*head = (*head)->next;
-		free(temp->str);
-		free(temp);
-		return (1);
-	}
+		return;
 
 	list_t *current = *head;
-	list_t *prev = NULL;
+	list_t *temp;
 
-	for (unsigned int i = 0; i < index; i++)
+	while (current)
 	{
-		if (!current)
-			return (0); /* Index out of range */
-		prev = current;
+		temp = current;
 		current = current->next;
+		free(temp->str);
+		free(temp);
 	}
 
-	if (!current)
-		return (0); /* Index out of range */
-
-	prev->next = current->next;
-	free(current->str);
-	free(current);
-
-	return (1);
+	*head = NULL;
 }
