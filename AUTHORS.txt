@@ -2,4 +2,3 @@
 # This file lists all contributors to the repository.
 
 1.VICTOR BUNDI  <nyaribovic@gmail.com>
-2.CHIBUZO EBI   <ebichibuzoac@gmail.com>

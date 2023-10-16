@@ -1,0 +1,2426 @@
+#include "shell.h"
+
+/**
+ * _custom_strncpy - Copies a string.
+ * @dest: The destination string to be copied to.
+ * @src: The source string.
+ * @n: The number of characters to be copied.
+ *
+ * Return: The concatenated string.
+ */
+char *_custom_strncpy(char *dest, const char *src, size_t n)
+{
+	size_t i;
+
+	for (i = 0; i < n && src[i] != '\0'; i++)
+	{
+		dest[i] = src[i];
+	}
+
+	dest[i] = '\0'; /* Ensure null-terminated string */
+
+	return (dest);
+}
+
+/**
+ * _custom_strncat - Concatenates two strings.
+ * @dest: The destination string.
+ * @src: The source string.
+ * @n: The maximum number of characters to concatenate.
+ *
+ * Return: The concatenated string.
+ */
+char *_custom_strncat(char *dest, const char *src, size_t n)
+{
+	size_t dest_len = strlen(dest);
+	size_t i;
+
+	for (i = 0; i < n && src[i] != '\0'; i++)
+	{
+		dest[dest_len + i] = src[i];
+	}
+
+	dest[dest_len + i] = '\0'; /* Ensure null-terminated string */
+
+	return (dest);
+}
+
+/**
+ * _custom_strchr - Locates a character in a string.
+ * @s: The string to be parsed.
+ * @c: The character to look for.
+ *
+ * Return: A pointer to the first occurrence of 'c' in 's',
+ * or NULL if not found.
+ */
+char *_custom_strchr(const char *s, int c)
+{
+	while (*s != '\0')
+	{
+		if (*s == c)
+		{
+			return ((char *)s);
+		}
+		s++;
+	}
+
+	return (NULL); /* Character not found */
+}
+#include "shell.h"
+
+/**
+ * _print_string - Prints an input string to stderr.
+ * @str: The string to be printed.
+ * Return: Nothing.
+ */
+void _print_string(char *str)
+{
+	int i = 0;
+
+	if (!str)
+		return;
+
+	while (str[i] != '\0')
+	{
+		_write_character_stderr(str[i]);
+		i++;
+	}
+}
+
+/**
+ * _write_character_stderr - Writes a character to stderr.
+ * @c: The character to print.
+ * Return: On success 1.
+ * On error, -1 is returned, and errno is set appropriately.
+ */
+int _write_character_stderr(char c)
+{
+	static int i;
+	static char buf[WRITE_BUF_SIZE];
+
+	if (c == BUF_FLUSH || i >= WRITE_BUF_SIZE)
+	{
+		write(2, buf, i);
+		i = 0;
+	}
+
+	if (c != BUF_FLUSH)
+		buf[i++] = c;
+
+	return (1);
+}
+
+/**
+ * _write_character_fd - Writes a character to a given file descriptor.
+ * @c: The character to print.
+ * @fd: The file descriptor to write to.
+ * Return: On success 1.
+ * On error, -1 is returned, and errno is set appropriately.
+ */
+int _write_character_fd(char c, int fd)
+{
+	static int i;
+	static char buf[WRITE_BUF_SIZE];
+
+	if (c == BUF_FLUSH || i >= WRITE_BUF_SIZE)
+	{
+		write(fd, buf, i);
+		i = 0;
+	}
+
+	if (c != BUF_FLUSH)
+		buf[i++] = c;
+
+	return (1);
+}
+
+/**
+ * _print_string_fd - Prints an input string to a given file descriptor.
+ * @str: The string to be printed.
+ * @fd: The file descriptor to write to.
+ * Return: The number of characters printed.
+ */
+int _print_string_fd(char *str, int fd)
+{
+	int i = 0;
+
+	if (!str)
+		return (0);
+
+	while (*str)
+	{
+		i += _write_character_fd(*str++, fd);
+	}
+
+	return (i);
+}
+#include "shell.h"
+
+/**
+ * get_environ - Returns a copy of the environ string array.
+ * @info: Structure containing potential arguments.
+ * Return: A copy of the environ string array.
+ */
+char **get_environ(info_t *info)
+{
+	if (!info->environ || info->env_changed)
+	{
+		info->environ = list_to_strings(info->env);
+		info->env_changed = 0;
+	}
+
+	return (info->environ);
+}
+
+/**
+ * _unsetenv - Remove an environment variable.
+ * @info: Structure containing potential arguments.
+ * @var: The environment variable to be removed.
+ * Return: 1 if the variable is removed, 0 otherwise.
+ */
+int _unsetenv(info_t *info, char *var)
+{
+	list_t *node = info->env;
+	size_t i = 0;
+	char *p;
+
+	if (!node || !var)
+		return (0);
+
+	while (node)
+	{
+		p = starts_with(node->str, var);
+		if (p && *p == '=')
+		{
+			info->env_changed = delete_node_at_index(&(info->env), i);
+			i = 0;
+			node = info->env;
+			continue;
+		}
+		node = node->next;
+		i++;
+	}
+	return (info->env_changed);
+}
+
+/**
+ * _setenv - Initialize a new environment variable or modify an existing one.
+ * @info: Structure containing potential arguments.
+ * @var: The environment variable name.
+ * @value: The value to set for the environment variable.
+ * Return: 0 on success, 1 on failure.
+ */
+int _setenv(info_t *info, char *var, char *value)
+{
+	char *buf = NULL;
+	list_t *node;
+	char *p;
+
+	if (!var || !value)
+		return (0);
+
+	buf = malloc(_strlen(var) + _strlen(value) + 2);
+	if (!buf)
+		return (1);
+	string_copy(buf, var);
+	_strcat(buf, "=");
+	_strcat(buf, value);
+	node = info->env;
+	while (node)
+	{
+		p = starts_with(node->str, var);
+		if (p && *p == '=')
+		{
+			free(node->str);
+			node->str = buf;
+			info->env_changed = 1;
+			return (0);
+		}
+		node = node->next;
+	}
+	add_node_end(&(info->env), buf, 0);
+	free(buf);
+	info->env_changed = 1;
+	return (0);
+}
+#include "shell.h"
+
+/**
+ * get_history_file - Get the history file path
+ * @info: Pointer to the parameter struct
+ *
+ * Return: Allocated string containing the history file path
+ */
+char *get_history_file(info_t *info)
+{
+	char *home_dir = getEnvironmentValue(info, "HOME="); /* _getenv */
+
+	if (!home_dir)
+		return (NULL);
+
+	char *history_file = malloc(_strlen(home_dir) + _strlen(HIST_FILE) + 2);
+
+	if (!history_file)
+		return (NULL);
+
+	string_copy(history_file, home_dir);
+	_strcat(history_file, "/");
+	_strcat(history_file, HIST_FILE);
+
+	return (history_file);
+}
+
+/**
+ * read_history_from_file_internal - Read history from file
+ * @info: Pointer to the parameter struct
+ * @filename: The name of the history file
+ *
+ * Return: A string containing the history contents, or NULL on failure
+ */
+char *read_history_from_file_internal(info_t *info, char *filename)
+{
+	ssize_t fd = open(filename, O_RDONLY);
+
+	if (fd == -1)
+		return (NULL);
+
+	struct stat st;
+
+	if (fstat(fd, &st) != 0)
+	{
+		close(fd);
+		return (NULL);
+	}
+
+	char *buf = malloc(st.st_size + 1);
+
+	if (!buf)
+	{
+		close(fd);
+		return (NULL);
+	}
+
+	ssize_t rdlen = read(fd, buf, st.st_size);
+
+	close(fd);
+
+	if (rdlen <= 0)
+	{
+		free(buf);
+		return (NULL);
+	}
+
+	buf[st.st_size] = '\0';
+
+	return (buf);
+}
+
+/**
+ * write_history_to_file_internal - Write history to file
+ * @info: Pointer to the parameter struct
+ * @filename: The name of the history file
+ *
+ * Return: 1 on success, -1 on failure
+ */
+int write_history_to_file_internal(info_t *info, char *filename)
+{
+	ssize_t fd = open(filename, O_CREAT | O_TRUNC | O_RDWR, 0644);
+
+	if (fd == -1)
+		return (-1);
+
+	list_t *node = info->history;
+
+	while (node)
+	{
+		char *str = node->str;
+
+		_write_character_fd('\n', fd);
+		_print_string_fd(str, fd);
+		node = node->next;
+	}
+
+	close(fd);
+
+	return (1);
+}
+#include "shell.h"
+#include <stdio.h>
+
+/**
+ * interactive - checks if the shell is in interactive mode
+ * @info: pointer to info_t struct
+ *
+ * Return: 1 if interactive mode, 0 otherwise
+ */
+int interactive(info_t *info)
+{
+	return (isatty(STDIN_FILENO) && info->readfd <= 2);
+}
+
+/**
+ * is_delim - checks if a character is a delimiter
+ * @c: the character to check
+ * @delim: string containing delimiters
+ *
+ * Return: 1 if true, 0 if false
+ */
+int is_delim(char c, char *delim)
+{
+	while (*delim)
+	{
+		if (*delim == c)
+			return (1);
+		delim++;
+	}
+	return (0);
+}
+
+/**
+ * _isalpha - checks if a character is alphabetic
+ * @c: the character to check
+ *
+ * Return: 1 if c is alphabetic, 0 otherwise
+ */
+int _isalpha(int c)
+{
+	return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'));
+}
+
+/**
+ * _atoi - converts a string to an integer
+ * @s: the string to be converted
+ *
+ * Return: the converted number if valid, 0 otherwise
+ */
+int _atoi(char *s)
+{
+	int i = 0;
+	int sign = 1;
+	int result = 0;
+
+	/* Handle leading whitespace */
+	while (s[i] == ' ')
+		i++;
+
+	/* Handle sign */
+	if (s[i] == '-')
+	{
+		sign = -1;
+		i++;
+	}
+
+	/* Calculate the integer value */
+	while (s[i] >= '0' && s[i] <= '9')
+	{
+		result = result * 10 + (s[i] - '0');
+		i++;
+	}
+
+	return (result * sign);
+}
+#include "shell.h"
+
+/**
+ * main - Entry point for the shell program
+ * @argc: Argument count
+ * @argv: Argument vector
+ *
+ * Return: 0 on success, 1 on error
+ */
+int main(int argc, char **argv)
+{
+	/* Initializing the shell information */
+	info_t info = INFO_INIT;
+	int input_fd = STDIN_FILENO;
+
+	if (argc == 2)
+	{
+		input_fd = open_input_file(argv[1]);
+		if (input_fd == -1)
+		{
+			handle_open_file_error(argv[0], argv[1]);
+			return (EXIT_FAILURE);
+		}
+		info.readfd = input_fd;
+	}
+
+	/* Initializing environment variables and read history */
+	initialize_environment(&info);
+	read_command_history(&info);
+
+	/*Next Start the main shell loop */
+	int exit_status = start_shell(&info, argv);
+
+	return (exit_status);
+}
+
+/**
+ * open_input_file - Open an input file and handle errors
+ * @filename: Name of the input file
+ *
+ * Return: File descriptor or -1 on error
+ */
+int open_input_file(const char *filename)
+{
+	int fd = open(filename, O_RDONLY);
+
+	if (fd == -1)
+	{
+		if (errno == EACCES)
+			exit(126);
+		if (errno == ENOENT)
+		{
+			_print_string('filename');
+			_print_string(": 0: Can't open ");
+			_print_string(filename);
+			_write_character_stderr('\n');
+			_write_character_stderr(BUF_FLUSH);
+			exit(127);
+		}
+	}
+
+	return (fd);
+}
+
+/**
+  * initialize_environment - Initialize environment variables
+ * @info: Pointer to info_t structure
+ */
+void initialize_environment(info_t *info)
+{
+	/* Populate environment variables list */
+	populateEnvironmentList(info);
+}
+
+/**
+ * start_shell - Start the shell's main loop
+ * @info: Pointer to info_t structure
+ * @argv: Argument vector
+ *
+ * Return: Exit status
+ */
+int start_shell(info_t *info, char **argv)
+{
+	/* Start the main shell loop */
+	return (main_shell_loop(info, argv));
+}
+
+/**
+ * main_shell_loop - Main shell loop logic
+ * @info: Pointer to info_t structure
+ * @argv: Argument vector
+ *
+ * Return: Exit status
+ */
+int main_shell_loop(info_t *info, char **argv)
+{
+	/* Main shell loop logic */
+	/* We call the original hsh function code here */
+	return (hsh(info, argv));
+}
+
+#include "shell.h"
+
+/**
+ * _memset - Fills memory with a constant byte
+ * @s: Pointer to the memory area
+ * @c: The byte to fill the memory with
+ * @n: The number of bytes to be filled
+ *
+ * Return: A pointer to the memory area s
+ */
+char *_memset(char *s, char c, unsigned int n)
+{
+	unsigned int i;
+
+	for (i = 0; i < n; i++)
+		s[i] = c;
+	return (s);
+}
+
+/**
+ * free_string_array - Frees an array of strings
+ * @str_array: The array of strings to free
+ */
+void free_string_array(char **str_array)
+{
+	char **temp = str_array;
+
+	if (!str_array)
+		return;
+	while (*str_array)
+		free(*str_array++);
+	free(temp);
+}
+
+/**
+ * _realloc - Reallocates a block of memory
+ * @ptr: Pointer to the previous malloc'ated block
+ * @old_size: Byte size of the previous block
+ * @new_size: Byte size of the new block
+ *
+ * Return: A pointer to the reallocated block
+ */
+void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size)
+{
+	char *new_ptr;
+
+	if (!ptr)
+		return (malloc(new_size));
+	if (!new_size)
+	{
+		free(ptr);
+		return (NULL);
+	}
+	if (new_size == old_size)
+		return (ptr);
+
+	new_ptr = malloc(new_size);
+	if (!new_ptr)
+		return (NULL);
+
+	old_size = old_size < new_size ? old_size : new_size;
+	while (old_size--)
+		new_ptr[old_size] = ((char *)ptr)[old_size];
+	free(ptr);
+	return (new_ptr);
+}
+#include "shell.h"
+
+/**
+ * _strlen - Returns the length of a string.
+ * @s: The string to determine the length of.
+ *
+ * Return: The length of the string.
+ */
+int _strlen(const char *s)
+{
+	int length = 0;
+
+	if (s)
+	{
+		while (s[length])
+		{
+			length++;
+		}
+	}
+	return (length);
+}
+
+/**
+ * _strcmp - Compares two strings lexicographically.
+ * @s1: The first string.
+ * @s2: The second string.
+ *
+ * Return: 0 if s1 is equal to s2, a positive value if s1 is greater, and
+ * a negative value if s1 is smaller.
+ */
+int _strcmp(const char *s1, const char *s2)
+{
+	while (*s1 && *s2 && *s1 == *s2)
+	{
+		s1++;
+		s2++;
+	}
+	return (*s1 - *s2);
+}
+
+/**
+ * starts_with - Checks if a string starts with a specific substring.
+ * @haystack: The string to search.
+ * @needle: The substring to find at the beginning of the haystack.
+ *
+ * Return: A pointer to the character after the matched substring or NULL.
+ */
+char *starts_with(const char *haystack, const char *needle)
+{
+	while (*needle)
+	{
+		if (*needle != *haystack)
+		{
+			return (NULL);
+		}
+		needle++;
+		haystack++;
+	}
+	return ((char *)haystack);
+}
+
+/**
+ * _strcat - Concatenates two strings.
+ * @dest: The destination buffer.
+ * @src: The source buffer to append to the destination.
+ *
+ * Return: A pointer to the destination buffer.
+ */
+char *_strcat(char *dest, const char *src)
+{
+	char *destination = dest;
+
+	while (*dest)
+	{
+		dest++;
+	}
+
+	while (*src)
+	{
+		*dest++ = *src++;
+	}
+
+	*dest = '\0';
+	return (destination);
+}
+#include "shell.h"
+#include <string.h>
+
+/**
+ * print_history - Print the history list, command per line.
+ * @info: The info_t structure containing the history list.
+ * Return: Always 0.
+ */
+int print_history(info_t *info)
+{
+	list_t *node = info->history;
+
+	while (node)
+	{
+		_puts(node->str);
+		_putchar('\n');
+		node = node->next;
+	}
+
+	return (0);
+}
+
+/**
+ * unset_alias - Unset an alias.
+ * @info: The info_t structure containing alias list.
+ * @alias: The alias to unset.
+ * Return: Always 0 on success, 1 on error.
+ */
+int unset_alias(info_t *info, char *alias)
+{
+	char *equal_sign = strchr(alias, '='); /* Use strchr from string.h*/
+	int result;
+
+	if (!equal_sign)
+		return (1);
+
+	*equal_sign = '\0'; /* Terminate the alias string at '=' */
+
+	result = delete_node_at_index(&(info->alias),
+		get_node_index(info->alias, node_starts_with(info->alias, alias, -1)));
+
+	*equal_sign = '='; /* Restore the original string */
+
+	return (result);
+}
+
+/**
+ * set_alias - Set an alias to a string.
+ * @info: The info_t structure containing alias list.
+ * @alias: The alias to set.
+ * Return: Always 0 on success, 1 on error.
+ */
+int set_alias(info_t *info, char *alias)
+{
+	char *equal_sign = strchr(alias, '='); /*Use strchr from string.h*/
+
+	if (!equal_sign)
+		return (1);
+
+	*equal_sign = '\0'; /* Terminate the alias string at '=' */
+
+	unset_alias(info, alias); /* Remove any existing alias with the same name */
+
+	*equal_sign = '='; /* Restore the original string */
+
+	return (add_node_end(&(info->alias), alias, 0) == NULL);
+}
+
+/**
+ * print_alias - Print an alias string.
+ * @node: The alias node.
+ * Return: Always 0 on success, 1 on error.
+ */
+int print_alias(list_t *node)
+{
+	if (node)
+	{
+		char *equal_sign = strchr(node->str, '='); /* Use strchr from string.h*/
+
+		if (equal_sign)
+		{
+			*equal_sign = '\0'; /* Terminate the alias string at '=' */
+			_puts(node->str);
+			*equal_sign = '='; /* Restore the original string */
+			_puts("'");
+			_puts(equal_sign + 1);
+			_puts("'\n");
+			return (0);
+		}
+		return (0);
+	}
+	return (1);
+}
+#include "shell.h"
+
+/**
+ * printEnvironment - Print the current environment variables.
+ * @info: Structure containing potential arguments.
+ *
+ * Return: 0 on success, 1 on error.
+ */
+int printEnvironment(info_t *info)
+{
+	print_list_str(info->env);
+	return (0);
+}
+
+/**
+ * getEnvironmentValue - Get the value of an environment variable.
+ * @info: Structure containing potential arguments.
+ * @name: Name of the environment variable.
+ *
+ * Return: The value of the environment variable, or NULL if not found.
+ */
+char *getEnvironmentValue(info_t *info, const char *name)
+{
+	list_t *node = info->env;
+	char *value;
+
+	while (node)
+	{
+		value = starts_with(node->str, name);
+		if (value && *value)
+			return (value);
+		node = node->next;
+	}
+	return (NULL);
+}
+
+/**
+ * setEnvironmentVariable - Initialize a new environment variable
+ * or modify an existing one.
+ * @info: Structure containing potential arguments.
+ *
+ * Return: 0 on success, 1 on error.
+ */
+int setEnvironmentVariable(info_t *info)
+{
+	if (info->argc != 3)
+	{
+		_puts("Usage: setenv VARIABLE VALUE\n");
+		return (1);
+	}
+
+	if (_setenv(info, info->argv[1], info->argv[2]) == 0)
+		return (0);
+
+	_puts("Failed to set environment variable.\n");
+	return (1);
+}
+
+/**
+ * unsetEnvironmentVariable - Remove an environment variable.
+ * @info: Structure containing potential arguments.
+ *
+ * Return: 0 on success, 1 on error.
+ */
+int unsetEnvironmentVariable(info_t *info)
+{
+	if (info->argc != 2)
+	{
+		_puts("Usage: unsetenv VARIABLE\n");
+		return (1);
+	}
+
+	if (unsetenv(info->argv[1]) == 0)
+		return (0);
+
+	_puts("Failed to unset environment variable.\n");
+	return (1);
+}
+
+/**
+ * populateEnvironmentList - Populate the environment linked list.
+ * @info: Structure containing potential arguments.
+ *
+ * Return: Always 0.
+ */
+int populateEnvironmentList(info_t *info)
+{
+	list_t *node = NULL;
+	size_t i;
+
+	for (i = 0; environ[i]; i++)
+		add_node_end(&node, environ[i], 0);
+
+	info->env = node;
+	return (0);
+}
+#include "shell.h"
+
+/**
+ * split_path - Split the PATH variable into individual paths
+ * @pathstr: The PATH string
+ *
+ * Return: An array of strings containing individual paths
+ */
+char **split_path(const char *pathstr)
+{
+	if (!pathstr)
+		return (NULL);
+
+	char **paths = NULL;
+	int path_count = 0, i = 0, start = 0;
+
+	while (pathstr[i])
+	{
+		if (pathstr[i] == ':')
+		{
+			char *path = extract_path(pathstr, start, i);
+
+			if (path)
+			{
+				paths = realloc(paths, sizeof(char *) * (path_count + 1));
+				paths[path_count] = path;
+				path_count++;
+			}
+			start = i + 1;
+		}
+		i++;
+	}
+
+	char *path = extract_path(pathstr, start, i);
+
+	if (path)
+	{
+		paths = realloc(paths, sizeof(char *) * (path_count + 1));
+		paths[path_count] = path;
+		path_count++;
+	}
+
+	if (path_count == 0)
+	{
+		free(paths);
+		paths = NULL;
+	}
+
+	return (paths);
+}
+
+/**
+ * find_command_path - Find the full path of a command in the PATH variable
+ * @pathstr: The PATH string
+ * @cmd: The command to find
+ *
+ * Return: A dynamically allocated string containing the full path of the
+ *         the command or NULL if not found
+ */
+char *find_command_path(const char *pathstr, const char *cmd)
+{
+	if (!pathstr || !cmd)
+		return (NULL);
+
+	if (cmd[0] == '.' && (cmd[1] == '/' || cmd[1] == '\\') && is_executable(cmd))
+		return (strdup(cmd));
+
+	char **paths = split_path(pathstr);
+	char *command_path = NULL;
+
+	if (paths)
+	{
+		for (int i = 0; paths[i] != NULL; i++)
+		{
+			command_path = find_command_in_path(paths[i], cmd);
+			if (command_path)
+			{
+				free(paths);
+				return (command_path);
+			}
+		}
+		free(paths);
+	}
+
+	return (NULL);
+}
+#include "shell.h"
+
+/**
+ * clear_info - Initializes info_t struct
+ * @info: Struct address
+ */
+void clear_info(info_t *info)
+{
+	info->arg = NULL;
+	info->argv = NULL;
+	info->path = NULL;
+	info->argc = 0;
+}
+
+/**
+ * set_info - Initializes info_t struct
+ * @info: Struct address
+ * @av: Argument vector
+ */
+void set_info(info_t *info, char **av)
+{
+	int i = 0;
+
+	info->fname = av[0];
+	if (info->arg)
+	{
+		info->argv = strtow(info->arg, " \t");
+		if (!info->argv)
+		{
+			info->argv = malloc(sizeof(char *) * 2);
+			if (info->argv)
+			{
+				info->argv[0] = _strdup(info->arg);
+				info->argv[1] = NULL;
+			}
+		}
+		while (info->argv && info->argv[i])
+		{
+			i++;
+		}
+		info->argc = i;
+
+		replace_alias(info);
+		replace_vars(info);
+	}
+}
+
+/**
+ * free_info - Frees info_t struct fields
+ * @info: Struct address
+ * @all: True if freeing all fields
+ */
+void free_info(info_t *info, int all)
+{
+	ffree(info->argv);
+	info->argv = NULL;
+	info->path = NULL;
+	if (all)
+	{
+		if (!info->cmd_buf)
+		{
+			free(info->arg);
+		}
+		if (info->env)
+		{
+			free_list(&(info->env));
+		}
+		if (info->history)
+		{
+			free_list(&(info->history));
+		}
+		if (info->alias)
+		{
+			free_list(&(info->alias));
+		}
+		ffree(info->environ);
+		info->environ = NULL;
+		bfree((void **)&info->cmd_buf);
+		if (info->readfd > 2)
+		{
+			close(info->readfd);
+		}
+		_putchar(BUF_FLUSH);
+	}
+}
+#include "shell.h"
+
+/**
+ * hsh - main shell loop
+ * @info: the parameter & return info struct
+ * @argv: the argument vector from main()
+ *
+ * Return: 0 on success, 1 on error, or error code
+ */
+int hsh(info_t *info, char **argv)
+{
+	ssize_t r = 0;
+	int builtin_ret = 0;
+
+	while (r != -1 && builtin_ret != -2)
+	{
+		clear_info(info);
+		if (interactive(info))
+			_puts("$ ");
+		_eputchar(BUF_FLUSH);
+		r = get_input(info);
+		if (r != -1)
+		{
+			set_info(info, argv);
+			builtin_ret = find_builtin(info);
+			if (builtin_ret == -1)
+				find_cmd(info);
+		}
+		else if (interactive(info))
+			_putchar('\n');
+		free_info(info, 0);
+	}
+	write_history(info);
+	free_info(info, 1);
+	if (!interactive(info) && info->status)
+		exit(info->status);
+	if (builtin_ret == -2)
+	{
+		if (info->err_num == -1)
+			exit(info->status);
+		exit(info->err_num);
+	}
+	return (builtin_ret);
+}
+
+/**
+ * find_builtin - finds a builtin command
+ * @info: the parameter & return info struct
+ *
+ * Return: -1 if builtin not found,
+ *         0 if builtin executed successfully,
+ *         1 if builtin found but not successful,
+ *         2 if builtin signals exit()
+ */
+int find_builtin(info_t *info)
+{
+	int i, built_in_ret = -1;
+	builtin_table builtintbl[] = {
+		{"exit", _myexit},
+		{"env", _myenv},
+		{"help", _myhelp},
+		{"history", _myhistory},
+		{"setenv", _mysetenv},
+		{"unsetenv", _myunsetenv},
+		{"cd", _mycd},
+		{"alias", _myalias},
+		{NULL, NULL}
+	};
+
+	for (i = 0; builtintbl[i].type; i++)
+		if (_strcmp(info->argv[0], builtintbl[i].type) == 0)
+		{
+			info->line_count++;
+			built_in_ret = builtintbl[i].func(info);
+			break;
+		}
+	return (built_in_ret);
+}
+
+/**
+ * find_cmd - finds a command in PATH
+ * @info: the parameter & return info struct
+ *
+ * Return: void
+ */
+void find_cmd(info_t *info)
+{
+	char *path = NULL;
+	int i, k;
+
+	info->path = info->argv[0];
+	if (info->linecount_flag == 1)
+	{
+		info->line_count++;
+		info->linecount_flag = 0;
+	}
+	for (i = 0, k = 0; info->arg[i]; i++)
+		if (!is_delim(info->arg[i], " \t\n"))
+			k++;
+	if (!k)
+		return;
+
+	path = find_path(info, _getenv(info, "PATH="), info->argv[0]);
+	if (path)
+	{
+		info->path = path;
+		fork_cmd(info);
+	}
+	else
+	{
+		if ((interactive(info) || _getenv(info, "PATH=")
+					|| info->argv[0][0] == '/') && is_cmd(info, info->argv[0]))
+			fork_cmd(info);
+		else if (*(info->arg) != '\n')
+		{
+			info->status = 127;
+			print_error(info, "not found\n");
+		}
+	}
+}
+
+/**
+ * fork_cmd - forks an exec thread to run cmd
+ * @info: the parameter & return info struct
+ *
+ * Return: void
+ */
+void fork_cmd(info_t *info)
+{
+	pid_t child_pid;
+
+	child_pid = fork();
+	if (child_pid == -1)
+	{
+		/* TODO: PUT ERROR FUNCTION */
+		perror("Error:");
+		return;
+	}
+	if (child_pid == 0)
+	{
+		if (execve(info->path, info->argv, get_environ(info)) == -1)
+		{
+			free_info(info, 1);
+			if (errno == EACCES)
+				exit(126);
+			exit(1);
+		}
+		/* TODO: PUT ERROR FUNCTION */
+	}
+	else
+	{
+		wait(&(info->status));
+		if (WIFEXITED(info->status))
+		{
+			info->status = WEXITSTATUS(info->status);
+			if (info->status == 126)
+				print_error(info, "Permission denied\n");
+		}
+	}
+}
+#include "shell.h"
+
+/**
+ * list_length - determines the length of a linked list
+ * @h: pointer to the first node
+ *
+ * Return: size of the list
+ */
+size_t list_length(const list_t *h)
+{
+	size_t length = 0;
+
+	while (h)
+	{
+		h = h->next;
+		length++;
+	}
+
+	return (length);
+}
+
+/**
+ * list_to_strings - converts a list of strings into an array of strings
+ * @head: pointer to the first node
+ *
+ * Return: array of strings
+ */
+char **list_to_strings(list_t *head)
+{
+	list_t *node = head;
+	size_t list_size = list_length(head);
+	size_t i, j;
+	char **str_array;
+	char *str;
+
+	if (!head || list_size == 0)
+		return (NULL);
+
+	str_array = malloc(sizeof(char *) * (list_size + 1);
+
+	if (!str_array)
+		return (NULL);
+
+	for (i = 0; node; node = node->next, i++)
+	{
+		str = malloc(_strlen(node->str) + 1);
+
+		if (!str)
+		{
+			for (j = 0; j < i; j++)
+				free(str_array[j];
+
+			free(str_array);
+			return (NULL);
+		}
+
+		str = _strcpy(str, node->str);
+		str_array[i] = str;
+	}
+
+	str_array[i] = NULL;
+	return (str_array);
+}
+
+/**
+ * print_linked_list - prints all elements of a list_t linked list
+ * @h: pointer to the first node
+ *
+ * Return: size of the list
+ */
+size_t print_linked_list(const list_t *h)
+{
+	size_t length = 0;
+
+	while (h)
+	{
+		_puts(convert_number(h->num, 10, 0));
+		_putchar(':');
+		_putchar(' ');
+		_puts(h->str ? h->str : "(nil)");
+		_puts("\n");
+		h = h->next;
+		length++;
+	}
+
+	return (length);
+}
+
+/**
+ * find_node_starts_with - finds a node whose string starts with a prefix
+ * @node: pointer to the list head
+ * @prefix: string to match
+ * @c: the next character after the prefix to match
+ *
+ * Return: matching node or NULL
+ */
+list_t *find_node_starts_with(list_t *node, char *prefix, char c)
+{
+	char *p = NULL;
+
+	while (node)
+	{
+		p = starts_with(node->str, prefix);
+
+		if (p && ((c == -1) || (*p == c)))
+			return (node);
+
+		node = node->next;
+	}
+
+	return (NULL);
+}
+
+/**
+ * get_node_index - gets the index of a node within a list
+ * @head: pointer to list head
+ * @node: pointer to the node
+ *
+ * Return: index of the node or -1
+ */
+ssize_t get_node_index(list_t *head, list_t *node)
+{
+	size_t index = 0;
+
+	while (head)
+	{
+		if (head == node)
+			return (index);
+
+		head = head->next;
+		index++;
+	}
+
+	return (-1);
+}
+#include "shell.h"
+
+/**
+ * free_and_null - Frees a pointer and sets it to NULL
+ * @ptr: Address of the pointer to free
+ *
+ * Return: 1 if freed, 0 if the pointer is already NULL
+ */
+int free_and_null(void **ptr)
+{
+	if (ptr != NULL && *ptr != NULL)
+	{
+		free(*ptr);
+		*ptr = NULL;
+		return (1);
+	}
+	return (0);
+}
+#include "shell.h"
+
+/**
+ * count_words - Count the number of words in a string using delimiters.
+ * @str: The input string.
+ * @delimiters: The delimiter string.
+ *
+ * Return: The number of words found.
+ */
+static int count_words(const char *str, const char *delimiters)
+{
+	int nmwords = 0;
+
+	if (str == NULL || str[0] == '\0')
+		return (0);
+
+	if (!delimiters)
+		delimiters = "	";
+	for (int i = 0; str[i] != '\0'; i++)
+	{
+		if (!is_delim(str[i], delimiters) &&
+		(is_delim(str[i + 1], delimiters) || !str[i + 1))
+			nmwords++;
+	}
+
+	return (nmwords);
+}
+
+/**
+ * split_words - Split a string into words using delimiters.
+ * @str: The input string.
+ * @delimiters: The delimiter string.
+ * @nmwords: The number of words.
+ *
+ * Return: A pointer to an array of strings, or NULL on failure.
+ */
+static char **split_words(const char *str, const char *delimiters, int nmwords)
+{
+	char **s = malloc((nmwords + 1) * sizeof(char *));
+
+	if (!s)
+		return (NULL);
+
+	int i = 0;
+	int j = 0;
+
+	for (i = 0, j = 0; j < nmwords; j++)
+	{
+		while (is_delim(str[i], delimiters))
+			i++;
+
+		int k = 0;
+
+		while (!is_delim(str[i + k], delimiters) && str[i + k])
+			k++;
+
+		s[j] = malloc((k + 1) * sizeof(char));
+
+		if (!s[j])
+		{
+			for (k = 0; k < j; k++)
+			{
+				free(s[k]);
+			}
+			free(s);
+			return (NULL);
+		}
+
+		for (int m = 0; m < k; m++)
+		{
+			s[j][m] = str[i++];
+		}
+		s[j][k] = '\0';
+	}
+
+	s[j] = NULL;
+	return (s);
+}
+
+/**
+ * strtow - Split a string into words using delimiters.
+ * @str: The input string.
+ * @delimiters: The delimiter string.
+ *
+ * Return: A pointer to an array of strings, or NULL on failure.
+ */
+char **strtow(const char *str, const char *delimiters)
+{
+	int nmwords = count_words(str, delimiters);
+
+	if (nmwords == 0)
+		return (NULL);
+
+	return (split_words(str, delimiters, nmwords));
+}
+#include "shell.h"
+#include <string.h>
+
+void print_error(info_t *info, const char *estr);
+
+/**
+ * exitShell - Exits the shell.
+ * @info: Structure containing potential arguments.
+ *
+ * Return: Exits with a given exit status (0) if info->argv[0] != "exit".
+ */
+int exitShell(info_t *info)
+{
+	int exitCheck;
+
+	if (info->argv[1]) /* If there is an exit argument */
+	{
+		exitCheck = _atoi(info->argv[1]);
+		if (exitCheck == -1)
+		{
+			info->status = 2;
+			print_error(info, "Illegal number: ");
+			_puts(info->argv[1]);
+			_putchar('\n');
+			return (1);
+		}
+		info->err_num = _atoi(info->argv[1]);
+		return (-2);
+	}
+	info->err_num = -1;
+	return (-2);
+}
+
+/**
+ * changeDirectory - Changes the current directory of the process.
+ * @info: Structure containing potential arguments.
+ *
+ * Return: Always 0.
+ */
+int changeDirectory(info_t *info)
+{
+	char *s, *dir, buffer[1024];
+	int chdir_ret;
+
+	s = getcwd(buffer, 1024);
+	if (!s)
+		_puts("TODO: >>getcwd failure emsg here<<\n");
+
+	if (!info->argv[1])
+	{
+		dir = getEnvironmentValue(info, "HOME=");
+		if (!dir)
+			chdir_ret = chdir((dir = getEnvironmentValue(info, "PWD=")) ? dir : "/");
+		else
+			chdir_ret = chdir(dir);
+	}
+	else if (_strcmp(info->argv[1], "-") == 0)
+	{
+		if (!getEnvironmentValue(info, "OLDPWD="))
+		{
+			_puts(s);
+			_putchar('\n');
+			return (1);
+		}
+		_puts(getEnvironmentValue(info, "OLDPWD="));
+		_putchar('\n');
+		chdir_ret = chdir((dir = getEnvironmentValue(info, "OLDPWD=")) ? dir : "/");
+	}
+	else
+		chdir_ret = chdir(info->argv[1]);
+	if (chdir_ret == -1)
+	{
+		print_error(info, "can't cd to ");
+		_puts(info->argv[1]);
+		_putchar('\n');
+	}
+	else
+	{
+		_setenv(info, "OLDPWD", getEnvironmentValue(info, "PWD="));
+		_setenv(info, "PWD", getcwd(buffer, 1024));
+	}
+	return (0);
+}
+
+/**
+ * helpCommand - Displays a help message.
+ * @info: Structure containing potential arguments.
+ *
+ * Return: Always 0.
+ */
+int helpCommand(info_t *info)
+{
+	char **arg_array;
+
+	arg_array = info->argv;
+	_puts("help call works. Function not yet implemented\n");
+	if (0)
+		_puts(*arg_array); /* temp att_unused workaround */
+	return (0);
+}
+#include "shell.h"
+
+/**
+ * string_to_int - Converts a string to an integer.
+ * @s: The string to be converted.
+ * Return: The converted number or -1 on error.
+ */
+int string_to_int(char *s)
+{
+	int i = 0;
+	unsigned long int result = 0;
+
+	if (*s == '+')
+		s++;
+
+	for (i = 0; s[i] != '\0'; i++)
+	{
+		if (s[i] >= '0' && s[i] <= '9')
+		{
+			result *= 10;
+			result += (s[i] - '0');
+			if (result > INT_MAX)
+				return (-1);
+		}
+		else
+			return (-1);
+	}
+	return (result);
+}
+
+/**
+ * print_error_message - Prints an error message.
+ * @info: The parameter and return info struct.
+ * @error_type: String containing the specified error type.
+ */
+void print_error_message(info_t *info, char *error_type)
+{
+	_puts(info->fname);
+	_puts(": ");
+	print_line_number(info->line_count, STDERR_FILENO);
+	_puts(": ");
+	_puts(info->argv[0]);
+	_puts(": ");
+	_puts(error_type);
+}
+
+/**
+ * print_line_number - Prints a decimal (integer) number (base 10).
+ * @input: The input number.
+ * @fd: The file descriptor to write to.
+ * Return: Number of characters printed.
+ */
+int print_line_number(int input, int fd)
+{
+	int (*__putchar)(char) = _putchar;
+	int i, count = 0;
+	unsigned int absolute_value, current;
+
+	if (fd == STDERR_FILENO)
+		__putchar = _putchar;
+
+	if (input < 0)
+	{
+		absolute_value = -input;
+		__putchar('-');
+		count++;
+	}
+	else
+		absolute_value = input;
+
+	current = absolute_value;
+
+	for (i = 1000000000; i > 1; i /= 10)
+	{
+		if (absolute_value / i)
+		{
+			__putchar('0' + current / i);
+			count++;
+		}
+		current %= i;
+	}
+	__putchar('0' + current);
+	count++;
+
+	return (count);
+}
+
+/**
+ * number_to_string - Converts a number to a string.
+ * @num: The number to convert.
+ * @base: The base for conversion.
+ * @flags: Argument flags.
+ * Return: The resulting string.
+ */
+char *number_to_string(long int num, int base, int flags)
+{
+	static char *array;
+	static char buffer[50];
+	char sign = 0;
+	char *ptr;
+	unsigned long n = num;
+
+	if (!(flags & CONVERT_UNSIGNED) && num < 0)
+	{
+		n = -num;
+		sign = '-';
+	}
+
+	array = flags & CONVERT_LOWERCASE ? "0123456789abcdef" : "0123456789ABCDEF";
+	ptr = &buffer[49];
+	*ptr = '\0';
+
+	do {
+		*--ptr = array[n % base];
+		n /= base;
+	} while (n != 0);
+
+	if (sign)
+		*--ptr = sign;
+	return (ptr);
+}
+
+/**
+ * remove_comments - Replaces the first instance of '#' with '\0'.
+ * @buf: The address of the string to modify.
+ */
+void remove_comments(char *buf)
+{
+	int i;
+
+	for (i = 0; buf[i] != '\0'; i++)
+		if (buf[i] == '#' && (!i || buf[i - 1] == ' '))
+		{
+			buf[i] = '\0';
+			break;
+		}
+}
+#include "shell.h"
+
+/**
+ * is_executable - Check if a file is an executable command
+ * @path: Path to the file
+ *
+ * Return: 1 if true, 0 otherwise
+ */
+int is_executable(const char *path)
+{
+	struct stat st;
+
+	if (!path || stat(path, &st) != 0)
+		return (0);
+
+	return (S_ISREG(st.st_mode) && (st.st_mode & S_IXUSR));
+}
+
+/**
+ * extract_path - Extract a substring from the PATH variable
+ * @pathstr: The PATH string
+ * @start: Starting index
+ * @stop: Stopping index
+ *
+ * Return: A dynamically allocated string containing the extracted path
+ */
+char *extract_path(const char *pathstr, int start, int stop)
+{
+	if (!pathstr || start < 0 || start >= stop)
+		return (NULL);
+
+	int length = stop - start;
+	char *path = malloc(length + 1);
+
+	if (path)
+	{
+		strncpy(path, pathstr + start, length);
+		path[length] = '\0';
+	}
+
+	return (path);
+}
+
+/**
+ * create_full_path - Create the full path by appending a command to a path
+ * @path: The base path
+ * @cmd: The command
+ *
+ * Return: A dynamically allocated string containing the full path
+ */
+char *create_full_path(const char *path, const char *cmd)
+{
+	if (!path || !cmd)
+		return (NULL);
+
+	char *full_path = malloc(strlen(path) + strlen(cmd) + 2);
+
+	if (full_path)
+	{
+		sprintf(full_path, "%s/%s", path, cmd);
+	}
+
+	return (full_path);
+}
+
+/**
+ * is_command_executable - Check if a command is executable in a specific path
+ * @path: The path to check
+ * @cmd: The command to find
+ *
+ * Return: 1 if true, 0 otherwise
+ */
+int is_command_executable(const char *path, const char *cmd)
+{
+	char *full_path = create_full_path(path, cmd);
+	int is_exec = 0;
+
+	if (full_path)
+	{
+		is_exec = is_executable(full_path);
+		free(full_path);
+	}
+
+	return (is_exec);
+}
+
+/**
+ * find_command_in_path - Find the command in a given path
+ * @path: The path to search
+ * @cmd: The command to find
+ *
+ * Return: The full path to the command or NULL if not found
+ */
+char *find_command_in_path(const char *path, const char *cmd)
+{
+	char *full_path = create_full_path(path, cmd);
+	char *command_path = NULL;
+
+	if (full_path)
+	{
+		if (is_command_executable(path, cmd))
+		{
+			command_path = full_path;
+		}
+		else
+		{
+			free(full_path);
+		}
+	}
+
+	return (command_path);
+}
+#include "shell.h"
+
+/**
+ * read_history_from_file - Read command history from a file
+ * @info: Pointer to the parameter struct
+ * @filename: The name of the history file
+ *
+ * Return: Histcount on success, 0 on failure
+ */
+int read_history_from_file(info_t *info, char *filename)
+{
+	char *buf = read_history_from_file_internal(info, filename);
+
+	if (buf == NULL)
+		return (0);
+
+	int linecount = 0;
+	int last = 0;
+
+	for (ssize_t i = 0; i < _strlen(buf); i++)
+	{
+		if (buf[i] == '\n')
+		{
+			buf[i] = '\0';
+			build_history_list(info, buf + last, linecount++);
+			last = i + 1;
+		}
+	}
+
+	if (last != _strlen(buf))
+		build_history_list(info, buf + last, linecount++);
+
+	free(buf);
+	info->histcount = linecount;
+
+	while (info->histcount-- >= HIST_MAX)
+		delete_node_at_index(&(info->history), 0);
+
+	renumber_history(info);
+
+	return (info->histcount);
+}
+
+/**
+ * build_history_list - Add an entry to the history linked list
+ * @info: Pointer to the parameter struct
+ * @buf: Buffer
+ * @linecount: History line count
+ *
+ * Return: Always 0
+ */
+int build_history_list(info_t *info, char *buf, int linecount)
+{
+	list_t *node = NULL;
+
+	if (info->history)
+		node = info->history;
+
+	add_node_end(&node, buf, linecount);
+
+	if (!info->history)
+		info->history = node;
+
+	return (0);
+}
+#include "shell.h"
+
+/**
+ * read_input_buffer - Read input into a buffer.
+ * @info: Structure containing potential arguments.
+ * @buf: Address of the buffer to read input into.
+ * @len: Address of the length variable.
+ *
+ * Return: Bytes read.
+ */
+ssize_t read_input_buffer(info_t *info, char **buf, size_t *len)
+{
+	ssize_t bytes_read = 0;
+	size_t len_p = 0;
+
+	if (!*len)
+	{
+		free(*buf);
+		*buf = NULL;
+		signal(SIGINT, sigintHandler);
+		#if USE_GETLINE
+		bytes_read = getline(buf, &len_p, stdin);
+		#else
+		bytes_read = custom_getline(info, buf, &len_p);
+		#endif
+
+		if (bytes_read > 0)
+		{
+			handle_input(info, buf, &len, bytes_read);
+		}
+	}
+	return (bytes_read);
+}
+
+/**
+ * get_input_line - Get a line without the newline character.
+ * @info: Structure containing potential arguments.
+ *
+ * Return: Bytes read.
+ */
+ssize_t get_input_line(info_t *info)
+{
+	static char *cmd_chain_buffer;
+	static size_t current_pos, chain_start_pos, buffer_len;
+	ssize_t bytes_read = 0;
+	char **buf_ptr = &(info->arg), *current_command;
+
+	_putchar(BUF_FLUSH);
+	bytes_read = read_input_buffer(info, &cmd_chain_buffer, &buffer_len);
+	if (bytes_read == -1)
+		return (-1);
+
+	if (buffer_len)
+	{
+		chain_start_pos = current_pos;
+		current_command = cmd_chain_buffer + current_pos;
+		process_command_chain(info, cmd_chain_buffer, &chain_start_pos,
+		current_pos, buffer_len);
+		current_pos = chain_start_pos + 1;
+
+		if (current_pos >= buffer_len)
+		{
+			reset_buffer_positions(&current_pos, &buffer_len, info);
+		}
+
+		*buf_ptr = current_command;
+		return (_strlen(current_command));
+	}
+
+	*buf_ptr = cmd_chain_buffer;
+	return (bytes_read);
+}
+
+/**
+ * custom_getline - Gets the next line of input from STDIN.
+ * @info: Structure containing potential arguments.
+ * @ptr: Address of the pointer to the buffer, preallocated or NULL.
+ * @length: Size of the preallocated ptr buffer if not NULL.
+ * Return: Bytes read.
+ */
+int custom_getline(info_t *info, char **ptr, size_t *length)
+{
+	static char buffer[READ_BUF_SIZE];
+	static size_t current_pos, buffer_len;
+	size_t k;
+	ssize_t bytes_read = 0, total_bytes_read = 0;
+	char *p = NULL, *new_p = NULL, *c;
+
+	p = *ptr;
+	if (p && length)
+		total_bytes_read = *length;
+
+	if (current_pos == buffer_len)
+	{
+		current_pos = buffer_len = 0;
+	}
+
+	do	{
+		bytes_read = read_input_buffer(info, buffer, &buffer_len);
+
+		if (bytes_read == -1 || (bytes_read == 0 && buffer_len == 0))
+			return (-1);
+
+		c = strchr(buffer + current_pos, '\n');
+		k = c ? 1 + (size_t)(c - buffer) : buffer_len;
+		new_p = _realloc(p, total_bytes_read, total_bytes_read ?
+		total_bytes_read + k : k + 1);
+
+		if (!new_p)
+		{
+			handle_memory_error(p);
+			return (-1);
+		}
+		handle_buffer(info, &p, &new_p, total_bytes_read,
+		buffer + current_pos, k - current_pos);
+
+		current_pos = k;
+	} while (!c);
+
+	*ptr = p;
+	return (total_bytes_read);
+}
+
+/**
+ * sigintHandler - Blocks Ctrl-C.
+ * @sig_num: The signal number.
+ * Return: void
+ */
+void sigintHandler(__attribute__((unused)) int sig_num)
+{
+	_puts("\n");
+	_puts("$ ");
+	_putchar(BUF_FLUSH);
+}
+#include "shell.h"
+
+/**
+ * add_node - Add a node to the start of the list
+ * @head: Address of pointer to head node
+ * @str: str field of the node
+ * @num: Node index used by history
+ *
+ * Return: Pointer to the new node
+ */
+list_t *add_node(list_t **head, const char *str, int num)
+{
+	if (!head)
+		return (NULL);
+
+	list_t *new_head = malloc(sizeof(list_t));
+
+	if (!new_head)
+		return (NULL);
+
+	_memset((void *)new_head, 0, sizeof(list_t));
+	new_head->num = num;
+
+	if (str)
+	{
+		new_head->str = _strdup(str);
+
+		if (!new_head->str)
+		{
+			free(new_head);
+			return (NULL);
+		}
+	}
+
+	new_head->next = *head;
+	*head = new_head;
+
+	return (new_head);
+}
+
+/**
+ * add_node_end - Add a node to the end of the list
+ * @head: Address of pointer to head node
+ * @str: str field of the node
+ * @num: Node index used by history
+ *
+ * Return: Pointer to the new node
+ */
+list_t *add_node_end(list_t **head, const char *str, int num)
+{
+	if (!head)
+		return (NULL);
+
+	list_t *new_node = malloc(sizeof(list_t));
+	list_t *node = *head;
+
+	if (!new_node)
+		return (NULL);
+
+	_memset((void *)new_node, 0, sizeof(list_t));
+	new_node->num = num;
+
+	if (str)
+	{
+		new_node->str = _strdup(str);
+
+		if (!new_node->str)
+		{
+			free(new_node);
+			return (NULL);
+		}
+	}
+
+	if (node)
+	{
+		while (node->next)
+			node = node->next;
+		node->next = new_node;
+	}
+	else
+		*head = new_node;
+
+	return (new_node);
+}
+
+/**
+ * print_node_string - Print the str element of a node
+ * @node: Pointer to a list_t node
+ */
+void print_node_string(const list_t *node)
+{
+	if (node)
+		_puts(node->str ? node->str : "(nil)");
+	_puts("\n");
+}
+
+/**
+ * print_list_strings - Print all str elements in a list_t linked list
+ * @head: Pointer to the first node
+ *
+ * Return: The number of nodes in the list
+ */
+size_t print_list_strings(const list_t *head)
+{
+	size_t count = 0;
+
+	while (head)
+	{
+		print_node_string(head);
+		head = head->next;
+		count++;
+	}
+	return (count);
+}
+
+/**
+ * delete_node_at_index - Deletes the node at a given index
+ * @head: A pointer to the address of the first node
+ * @index: The index of the node to delete
+ *
+ * Return: 1 on success, 0 on failure
+ */
+int delete_node_at_index(list_t **head, unsigned int index)
+{
+	if (!head || !*head)
+		return (0);
+
+	if (index == 0)
+	{
+		list_t *temp = *head;
+		*head = (*head)->next;
+		free(temp->str);
+		free(temp);
+		return (1);
+	}
+
+	list_t *current = *head;
+	list_t *prev = NULL;
+
+	for (unsigned int i = 0; i < index; i++)
+	{
+		if (!current)
+			return (0); /* Index out of range */
+		prev = current;
+		current = current->next;
+	}
+
+	if (!current)
+		return (0); /* Index out of range */
+
+	prev->next = current->next;
+	free(current->str);
+	free(current);
+
+	return (1);
+}
+Simple UNIX shell components
+Typically, a UNIX shell involves several components, including parsing and executing commands, 
+managing environment variables, handling built-in commands, history, and more. Below is a list
+of components which are part of such this project. The code is organized as categoried as 
+indicated:
+1.	Core Components:
+•	main.c: The main entry point for your program.
+•	shell.h: Header file containing function prototypes, data structures, and macros.
+2.	Input and Parsing:
+•	getLine.c: Functions to read input lines.
+•	tokenizer.c: Tokenization of input commands.
+•	parser.c: Parsing of tokens into command structures.
+3.	Command Execution:
+•	builtin.c and builtin1.c: Handling of built-in commands (e.g., cd, exit, echo).
+•	environ.c: Managing environment variables.
+•	vars.c: Variable handling (user-defined variables).
+•	executes.c: Executing external programs.
+4.	Error Handling:
+•	errors.c and errors1.c: Error handling and reporting functions.
+5.	Memory Management:
+•	memory.c: Functions for memory allocation and deallocation.
+6.	History and Command Lists:
+•	history.c: Command history functionality.
+•	lists.c and lists1.c: Data structures for managing lists of commands.
+7.	String Handling:
+•	string.c and string1.c: String manipulation functions.
+8.	Additional Functionality:
+•	getinfo.c: Collecting information about the system or commands.
+•	realloc.c: Handling dynamic memory reallocation.
+•	shell_loop.c: The main loop that repeatedly prompts the user for input.
+
+#include "shell.h"
+
+/**
+ * string_copy - Copy a string from src to dest.
+ * @dest: The destination buffer.
+ * @src: The source string.
+ *
+ * Return: A pointer to the destination buffer.
+ */
+char *string_copy(char *dest, const char *src)
+{
+	int i = 0;
+
+	if (dest == src || src == NULL)
+		return (dest);
+
+	while (src[i] != '\0')
+	{
+		dest[i] = src[i];
+		i++;
+	}
+	dest[i] = '\0';
+
+	return (dest);
+}
+
+/**
+ * string_duplicate - Duplicate a string.
+ * @str: The string to duplicate.
+ *
+ * Return: A pointer to the duplicated string, or NULL on failure.
+ */
+char *string_duplicate(const char *str)
+{
+	int length = 0;
+	char *duplicate;
+
+	if (str == NULL)
+		return (NULL);
+
+	while (str[length] != '\0')
+		length++;
+
+	duplicate = malloc(sizeof(char) * (length + 1));
+	if (duplicate == NULL)
+		return (NULL);
+
+	string_copy(duplicate, str);
+	return (duplicate);
+}
+
+/**
+ * string_print - Print a string to stdout.
+ * @str: The string to be printed.
+ *
+ * Return: Nothing.
+ */
+void string_print(const char *str)
+{
+	if (str == NULL)
+		return;
+
+	while (*str != '\0')
+	{
+		character_print(*str);
+		str++;
+	}
+}
+
+/**
+ * character_print - Write a character to stdout.
+ * @c: The character to print.
+ *
+ * Return: On success, 1. On error, -1 is returned.
+ */
+int character_print(char c)
+{
+	static int i;
+	static char buffer[WRITE_BUF_SIZE];
+
+	if (c == BUF_FLUSH || i >= WRITE_BUF_SIZE)
+	{
+		write(1, buffer, i);
+		i = 0;
+	}
+
+	if (c != BUF_FLUSH)
+		buffer[i++] = c;
+
+	return (1);
+}
+#include "shell.h"
+
+/**
+ * is_chain_delimiter - Check if current chr inthe buffer is a chain delimiter.
+ * @info: The parameter struct.
+ * @buf: The character buffer.
+ * @p: Address of the current position in buf.
+ *
+ * Return: 1 if it's a chain delimiter, 0 otherwise.
+ */
+int is_chain_delimiter(info_t *info, char *buf, size_t *p)
+{
+	size_t j = *p;
+
+	if (buf[j] == '|' && buf[j + 1] == '|')
+	{
+		buf[j] = 0;
+		j++;
+		info->cmd_buf_type = CMD_OR;
+	}
+	else if (buf[j] == '&' && buf[j + 1] == '&')
+	{
+		buf[j] = 0;
+		j++;
+		info->cmd_buf_type = CMD_AND;
+	}
+	else if (buf[j] == ';') /* Found the end of this command */
+	{
+		buf[j] = 0; /* Replace semicolon with null */
+		info->cmd_buf_type = CMD_CHAIN;
+	}
+	else
+	{
+		return (0);
+	}
+	*p = j;
+	return (1);
+}
+
+/**
+ * continue_chain - Check if chaining should continue based on the last status.
+ * @info: The parameter struct.
+ * @buf: The character buffer.
+ * @p: Address of the current position in buf.
+ * @i: Starting position in buf.
+ * @len: Length of buf.
+ *
+ * Return: Void.
+ */
+void continue_chain(info_t *info, char *buf, size_t *p, size_t i, size_t len)
+{
+	size_t j = *p;
+
+	if (info->cmd_buf_type == CMD_AND)
+	{
+		if (info->status)
+		{
+			buf[i] = 0;
+			j = len;
+		}
+	}
+	if (info->cmd_buf_type == CMD_OR)
+	{
+		if (!info->status)
+		{
+			buf[i] = 0;
+			j = len;
+		}
+	}
+
+	*p = j;
+}
+
+/**
+ * replace_alias - Replace aliases in the tokenized string.
+ * @info: The parameter struct.
+ *
+ * Return: 1 if replaced, 0 otherwise.
+ */
+int replace_alias(info_t *info)
+{
+	list_t *node;
+
+	for (int i = 0; i < 10; i++)
+	{
+		node = node_starts_with(info->alias, info->argv[0], '=');
+		if (!node)
+		{
+			return (0);
+		}
+		free(info->argv[0]);
+		char *p = _strchr(node->str, '=');
+
+		if (!p)
+		{
+			return (0);
+		}
+		p = _strdup(p + 1);
+		if (!p)
+		{
+			return (0);
+		}
+		info->argv[0] = p;
+	}
+	return (1);
+}
+
+/**
+ * replace_vars - Replace variables in the tokenized string.
+ * @info: The parameter struct.
+ *
+ * Return: 1 if replaced, 0 otherwise.
+ */
+int replace_vars(info_t *info)
+{
+	list_t *node;
+
+	for (int i = 0; info->argv[i]; i++)
+	{
+		if (info->argv[i][0] != '$' || !info->argv[i][1])
+		{
+			continue;
+		}
+
+		if (!_strcmp(info->argv[i], "$?"))
+		{
+			replace_string(&(info->argv[i]),
+			_strdup(convert_number(info->status, 10, 0));
+			continue;
+		}
+		if (!_strcmp(info->argv[i], "$$"))
+		{
+			replace_string(&(info->argv[i]), _strdup(convert_number(getpid(), 10, 0));
+			continue;
+		}
+		node = node_starts_with(info->env, &info->argv[i][1], '=');
+		if (node)
+		{
+			replace_string(&(info->argv[i]), _strdup(_strchr(node->str, '=') + 1));
+			continue;
+		}
+		replace_string(&info->argv[i], _strdup(""));
+	}
+	return (0);
+}
+
+/**
+ * replace_string - Replace a string.
+ * @old: Address of the old string.
+ * @new: New string.
+ *
+ * Return: 1 if replaced, 0 otherwise.
+ */
+int replace_string(char **old, char *new)
+{
+	free(*old);
+	*old = new;
+	return (1);
+}

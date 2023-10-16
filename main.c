@@ -9,7 +9,7 @@
  */
 int main(int argc, char **argv)
 {
-	/* Initialize the shell information */
+	/* Initializing the shell information */
 	info_t info = INFO_INIT;
 	int input_fd = STDIN_FILENO;
 
@@ -24,11 +24,11 @@ int main(int argc, char **argv)
 		info.readfd = input_fd;
 	}
 
-	/* Initialize environment variables and read history */
+	/* Initializing environment variables and read history */
 	initialize_environment(&info);
 	read_command_history(&info);
 
-	/* Start the main shell loop */
+	/*Next Start the main shell loop */
 	int exit_status = start_shell(&info, argv);
 
 	return (exit_status);
@@ -50,11 +50,11 @@ int open_input_file(const char *filename)
 			exit(126);
 		if (errno == ENOENT)
 		{
-			_eputs(filename);
-			_eputs(": 0: Can't open ");
-			_eputs(filename);
-			_eputchar('\n');
-			_eputchar(BUF_FLUSH);
+			_print_string('filename');
+			_print_string(": 0: Can't open ");
+			_print_string(filename);
+			_write_character_stderr('\n');
+			_write_character_stderr(BUF_FLUSH);
 			exit(127);
 		}
 	}
@@ -69,7 +69,7 @@ int open_input_file(const char *filename)
 void initialize_environment(info_t *info)
 {
 	/* Populate environment variables list */
-	populate_env_list(info);
+	populateEnvironmentList(info);
 }
 
 /**
@@ -95,7 +95,7 @@ int start_shell(info_t *info, char **argv)
 int main_shell_loop(info_t *info, char **argv)
 {
 	/* Main shell loop logic */
-	/* Place your original hsh function code here */
+	/* We call the original hsh function code here */
 	return (hsh(info, argv));
 }
 
