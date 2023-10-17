@@ -134,11 +134,12 @@ int _setenv(info_t *info, char *var, char *value);
 char *get_history_file(info_t *info);
 char *read_history_from_file_internal(info_t *info, char *filename);
 int write_history_to_file_internal(info_t *info, char *filename);
+int renumber_history(info_t *info);
 
 /*interactive.c*/
 
 int interactive(info_t *info);
-int is_delim(char c, char *delim);
+int is_delim(char c, const char *delim);
 int _isalpha(int c);
 int _atoi(char *s);
 
@@ -234,6 +235,7 @@ int helpCommand(info_t *info);
 int string_to_int(char *s);
 void print_error_message(info_t *info, char *error_type);
 int print_line_number(int input, int fd);
+char *number_to_string(long int num, int base, int flags);
 void remove_comments(char *buf);
 void _write_string_stderr(const char *str);
 

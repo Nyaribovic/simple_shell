@@ -23,7 +23,7 @@ list_t *add_node(list_t **head, const char *str, int num)
 
 	if (str)
 	{
-		new_head->str = _strdup(str);
+		new_head->str = string_duplicate(str);
 
 		if (!new_head->str)
 		{
@@ -62,7 +62,7 @@ list_t *add_node_end(list_t **head, const char *str, int num)
 
 	if (str)
 	{
-		new_node->str = _strdup(str);
+		new_node->str = string_duplicate(str);
 
 		if (!new_node->str)
 		{
@@ -90,8 +90,8 @@ list_t *add_node_end(list_t **head, const char *str, int num)
 void print_node_string(const list_t *node)
 {
 	if (node)
-		_puts(node->str ? node->str : "(nil)");
-	_puts("\n");
+		string_print(node->str ? node->str : "(nil)");
+	string_print("\n");
 }
 
 /**

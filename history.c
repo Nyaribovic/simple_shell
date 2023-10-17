@@ -1,5 +1,7 @@
 #include "shell.h"
 
+int renumber_history(info_t *info);
+
 /**
  * read_history_from_file - Read command history from a file
  * @info: Pointer to the parameter struct

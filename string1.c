@@ -78,13 +78,13 @@ int character_print(char c)
 	static int i;
 	static char buffer[WRITE_BUF_SIZE];
 
-	if (c == BUF_FLUSH || i >= WRITE_BUF_SIZE)
+	if (c == 1 || i >= WRITE_BUF_SIZE)
 	{
 		write(1, buffer, i);
 		i = 0;
 	}
 
-	if (c != BUF_FLUSH)
+	if (c != 1 )
 		buffer[i++] = c;
 
 	return (1);

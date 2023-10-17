@@ -20,8 +20,8 @@ int exitShell(info_t *info)
 		{
 			info->status = 2;
 			print_error(info, "Illegal number: ");
-			_puts(info->argv[1]);
-			_putchar('\n');
+			string_print(info->argv[1]);
+			character_print('\n');
 			return (1);
 		}
 		info->err_num = _atoi(info->argv[1]);
@@ -44,7 +44,7 @@ int changeDirectory(info_t *info)
 
 	s = getcwd(buffer, 1024);
 	if (!s)
-		_puts("TODO: >>getcwd failure emsg here<<\n");
+		string_print("TODO: >>getcwd failure emsg here<<\n");
 
 	if (!info->argv[1])
 	{
@@ -58,12 +58,12 @@ int changeDirectory(info_t *info)
 	{
 		if (!getEnvironmentValue(info, "OLDPWD="))
 		{
-			_puts(s);
-			_putchar('\n');
+			string_print(s);
+			character_print('\n');
 			return (1);
 		}
-		_puts(getEnvironmentValue(info, "OLDPWD="));
-		_putchar('\n');
+		string_print(getEnvironmentValue(info, "OLDPWD="));
+		character_print('\n');
 		chdir_ret = chdir((dir = getEnvironmentValue(info, "OLDPWD=")) ? dir : "/");
 	}
 	else
@@ -71,8 +71,8 @@ int changeDirectory(info_t *info)
 	if (chdir_ret == -1)
 	{
 		print_error(info, "can't cd to ");
-		_puts(info->argv[1]);
-		_putchar('\n');
+		string_print(info->argv[1]);
+		character_print('\n');
 	}
 	else
 	{
@@ -93,8 +93,8 @@ int helpCommand(info_t *info)
 	char **arg_array;
 
 	arg_array = info->argv;
-	_puts("help call works. Function not yet implemented\n");
+	string_print("help call works. Function not yet implemented\n");
 	if (0)
-		_puts(*arg_array); /* temp att_unused workaround */
+		string_print(*arg_array); /* temp att_unused workaround */
 	return (0);
 }

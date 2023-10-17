@@ -48,13 +48,13 @@ char **list_to_strings(list_t *head)
 		if (!str)
 		{
 			for (j = 0; j < i; j++)
-				free(str_array[j];
+				free(str_array[j]);
 
 			free(str_array);
 			return (NULL);
 		}
 
-		str = _strcpy(str, node->str);
+		str = string_copy(str, node->str);
 		str_array[i] = str;
 	}
 
@@ -74,11 +74,11 @@ size_t print_linked_list(const list_t *h)
 
 	while (h)
 	{
-		_puts(convert_number(h->num, 10, 0));
-		_putchar(':');
-		_putchar(' ');
-		_puts(h->str ? h->str : "(nil)");
-		_puts("\n");
+		string_print(number_to_string(h->num, 10, 0));
+		character_print(':');
+		character_print(' ');
+		string_print(h->str ? h->str : "(nil)");
+		string_print("\n");
 		h = h->next;
 		length++;
 	}

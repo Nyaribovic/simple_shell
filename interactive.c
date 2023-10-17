@@ -19,13 +19,13 @@ int interactive(info_t *info)
  *
  * Return: 1 if true, 0 if false
  */
-int is_delim(char c, char *delim)
+int is_delim(char c, const char *delim)
 {
 	while (*delim)
 	{
-		if (*delim == c)
-			return (1);
-		delim++;
+	if (*delim == c)
+		return (1);
+	delim++;
 	}
 	return (0);
 }

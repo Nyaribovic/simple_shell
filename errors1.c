@@ -35,13 +35,13 @@ int string_to_int(char *s)
  */
 void print_error_message(info_t *info, char *error_type)
 {
-	_puts(info->fname);
-	_puts(": ");
+	string_print(info->fname);
+	string_print(": ");
 	print_line_number(info->line_count, STDERR_FILENO);
-	_puts(": ");
-	_puts(info->argv[0]);
-	_puts(": ");
-	_puts(error_type);
+	string_print(": ");
+	string_print(info->argv[0]);
+	string_print(": ");
+	string_print(error_type);
 }
 
 /**
@@ -52,17 +52,17 @@ void print_error_message(info_t *info, char *error_type)
  */
 int print_line_number(int input, int fd)
 {
-	int (*__putchar)(char) = _putchar;
+	int (*_character_print)(char) = character_print;
 	int i, count = 0;
 	unsigned int absolute_value, current;
 
 	if (fd == STDERR_FILENO)
-		__putchar = _putchar;
+		_character_print = character_print;
 
 	if (input < 0)
 	{
 		absolute_value = -input;
-		__putchar('-');
+		_character_print('-');
 		count++;
 	}
 	else
@@ -74,12 +74,12 @@ int print_line_number(int input, int fd)
 	{
 		if (absolute_value / i)
 		{
-			__putchar('0' + current / i);
+			_character_print('0' + current / i);
 			count++;
 		}
 		current %= i;
 	}
-	__putchar('0' + current);
+	_character_print('0' + current);
 	count++;
 
 	return (count);

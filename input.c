@@ -45,7 +45,7 @@ ssize_t get_input_line(info_t *info)
 	ssize_t bytes_read = 0;
 	char **buf_ptr = &(info->arg), *current_command;
 
-	_putchar(BUF_FLUSH);
+	character_print(1);
 	bytes_read = read_input_buffer(info, &cmd_chain_buffer, &buffer_len);
 	if (bytes_read == -1)
 		return (-1);
@@ -128,7 +128,7 @@ int custom_getline(info_t *info, char **ptr, size_t *length)
  */
 void sigintHandler(__attribute__((unused)) int sig_num)
 {
-	_puts("\n");
-	_puts("$ ");
-	_putchar(BUF_FLUSH);
+	string_print("\n");
+	string_print("$ ");
+	character_print(1);
 }
