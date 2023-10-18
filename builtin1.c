@@ -1,5 +1,6 @@
 #include "shell.h"
-#include <string.h>
+
+void string_print(const char *str);
 
 /**
  * print_history - Print the history list, command per line.
