@@ -262,4 +262,8 @@ int replace_alias(info_t *info);
 int replace_vars(info_t *info);
 int replace_string(char **old, char *new);
 
+/*others*/
+int delete_node_at_index(list_t **head, unsigned int index);
+
+
 #endif

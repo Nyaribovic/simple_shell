@@ -21,6 +21,10 @@ int print_history(info_t *info)
 	return (0);
 }
 
+int delete_node_at_index(list_t **head, unsigned int index);
+
+void string_print(const char *str);
+
 /**
  * unset_alias - Unset an alias.
  * @info: The info_t structure containing alias list.
