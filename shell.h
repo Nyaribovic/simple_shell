@@ -200,7 +200,7 @@ int free_and_null(void **ptr);
 
 /* tokenizer.c */
 int count_words(const char *str, const char *delimiters);
-/*char **split_words(const char *str, const const char *delimiters, int nmwords);*/
+char **split_words(const char *str, const char *delimiters, int nmwords);
 char **strtow(const char *str, const char *delimiters);
 
 /* builtin.c */
@@ -251,7 +251,7 @@ char *_strcat(char *dest, const char *src);
 
 /* string1.c */
 char *string_copy(char *dest, const char *src);
-/*char *string_duplicate(const const char *str);*/
+char *string_duplicate(const  char *str);
 void string_print(const char *str);
 int character_print(char c);
 
