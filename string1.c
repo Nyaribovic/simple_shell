@@ -84,8 +84,8 @@ int character_print(char c)
 		i = 0;
 	}
 
-	if (c != 1 )
+	if (c != 1)
 		buffer[i++] = c;
 
-	return (1);
+		return (1);
 }

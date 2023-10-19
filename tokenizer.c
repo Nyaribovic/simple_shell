@@ -12,7 +12,7 @@ static int count_words(const char *str, char *delimiters)
 	int nmwords = 0;
 
 	if (str == NULL || str[0] == '\0')
-		return 0;
+		return (0);
 
 	if (!delimiters)
 		delimiters = "	";
@@ -23,7 +23,7 @@ static int count_words(const char *str, char *delimiters)
 			nmwords++;
 	}
 
-	return nmwords;
+	return (nmwords);
 }
 
 /**
@@ -39,7 +39,7 @@ static char **split_words(const char *str, char *delimiters, int nmwords)
 	char **s = malloc((nmwords + 1) * sizeof(char *));
 
 	if (!s)
-		return NULL;
+		return (NULL);
 
 	int i = 0;
 	int j = 0;
@@ -63,7 +63,7 @@ static char **split_words(const char *str, char *delimiters, int nmwords)
 				free(s[k]);
 			}
 			free(s);
-			return NULL;
+			return (NULL);
 		}
 
 		for (int m = 0; m < k; m++)
@@ -74,7 +74,7 @@ static char **split_words(const char *str, char *delimiters, int nmwords)
 	}
 
 	s[j] = NULL;
-	return s;
+	return (s);
 }
 
 /**

@@ -32,7 +32,7 @@ int _write_character_stderr(int c)
 
 	if (c == BUF_FLUSH || i >= WRITE_BUF_SIZE)
 	{
- 		write(2, buf, i);
+		write(2, buf, i);
 		i = 0;
 	}
 
